@@ -3,7 +3,7 @@
 Each unit: doc → RED → GREEN → refactor (see CLAUDE.md). Tests listed are the minimum; add more, never fewer.
 
 ## P0 — Scaffold
-- [ ] **U0 scaffold** — `pyproject.toml` (src layout, deps per design), package skeleton, `python -m epicycles --help` exits 0.
+- [x] **U0 scaffold** — `pyproject.toml` (src layout, deps per design), package skeleton, `python -m epicycles --help` exits 0.
   Also `tests/conftest.py` registering and loading a hypothesis profile with `derandomize=True`.
   Tests: `test_cli_help_exits_zero`.
 

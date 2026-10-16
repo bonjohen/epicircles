@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "epicycles"
+version = "0.1.0"
+description = "Fourier-epicycle line drawing: input (SVG / line-art raster / photo) -> single closed path -> DFT -> animated chain of rotating vectors."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy",
+    "pillow",
+    "scikit-image",
+    "svgpathtools",
+    "matplotlib",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "hypothesis"]
+
+[project.scripts]
+epicycles = "epicycles.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/epicycles"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
