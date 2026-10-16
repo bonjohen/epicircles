@@ -65,7 +65,7 @@ DFS retrace doubles path length but always yields a valid closed walk; that is t
 `fetch(src: str, cache_dir: Path) -> Path` — local path passthrough; URL → `cache_dir/sha256(url)[:16] + ext`, downloaded via `urllib.request` once, with a User-Agent header (Wikimedia rejects requests without one). `ext` from the URL path; if absent, from Content-Type (`image/svg+xml`→`.svg`, `image/png`→`.png`, `image/jpeg`→`.jpg`; anything else raises). No retries.
 
 ### `io/svg.py`
-`load_svg(path, samples_per_unit: float) -> list[Stroke]` — `svgpathtools.Document(path).flatten_all_paths()` so group and element `transform`s are applied (plain `svg2paths` ignores them, and most web clipart uses them). Basic shapes (circle, rect, line, polyline) are converted to paths. Each `continuous_subpaths()` piece → one Stroke sampled at `max(8, ceil(length·samples_per_unit))` points; y negated. Closed subpaths keep their closing point (dropped later by `join_strokes`).
+`load_svg(path, samples_per_unit: float) -> list[Stroke]` — `svgpathtools.Document(path).paths()` (svgpathtools ≥ 1.8; this method replaced `flatten_all_paths`) so group and element `transform`s are applied to the returned path geometry (plain `svg2paths` ignores them, and most web clipart uses them). Basic shapes (circle, rect, line, polyline) are converted to paths. Each `continuous_subpaths()` piece → one Stroke sampled at `max(8, ceil(length·samples_per_unit))` points; y negated. Closed subpaths keep their closing point (dropped later by `join_strokes`).
 
 ### `io/image.py`
 `load_gray(path, max_dim:int) -> uint8 HxW` — Pillow, convert "L", downscale (LANCZOS) so max(H,W) ≤ max_dim.
