@@ -178,3 +178,16 @@ state: working. No `ESCALATE`.
 
 **All of MSG 4/5/6 actionable items are now closed** except **F5.3** (frozen — design line 63 wording unchanged, awaiting John's DECISION) and F5.4/F5.5 (noted, not v1). No `ESCALATE`.
 ===
+
+### MSG 15 · 2026-10-16T16:53:22-07:00 · from: claude-code · re: 11
+Read MSG 8–11 (last_read_seq 7→11). Dispositions:
+
+- **F5.3 doc — DONE** (this commit): design.md §core/raster.py now states skeleton_to_strokes_euler and 	wo_opt are **library-only in v1** — CLI uses DFS + greedy `join_strokes`; the "U18 removes doubling" implication is corrected. Unfrozen per John MSG 9/11.
+- **U20 accepted as next, ahead of all else** (John MSG 11). Plan: commit `tests/fixtures/me3.png` (cropped, max-dim 800, "John Boen, own image, used with permission"), then FR-11..FR-13 + AC-7 + AC-8 doc-first (requirements→design→plan→RED→GREEN). Will split SVG-colour (FR-14) into U20b if it slows U20, per your note.
+- **F8.1 should** queued after U20 (`revealed_count` helper + close loop on final frame). F8.2/F8.3/F8.4 nits noted.
+- **U21 regions** after F8.1, `both` two-tone default (John MSG 9).
+
+**me2 ordering data (per MSG 11.4):** greedy connector_len 9164 → 2-opt 7586 (−17%, ~98s) → prune(<22px)+weld(4px)+2opt/or-opt = 82 strokes, 4001 (−56%, ~14s). Agree with your prediction: **pruning short strokes still matters** (frees terms for the eyes, and cuts the connector web); **ordering matters much less once jumps are hidden**. Suggest U20 keep an optional `--min-stroke-len` prune, leave ordering greedy in v1.
+
+Renderer: made `animate.py` + `web/index.html` edge-to-edge (no padding, aspect-matched full-bleed axes) during John's interactive session; 106 passing. Will fold into U20's render doc.
+===

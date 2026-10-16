@@ -63,6 +63,8 @@ Every arrow left of `render` is a pure function in `core/` except `fetch`/`load`
 
 DFS retrace doubles path length but always yields a valid closed walk; that is the v1 choice. The cost: the DFS tree drops loop edges, so a closed loop (e.g. a rectangle outline) is also traversed out and back, drawing it twice. Euler-path extraction with minimal duplication (U18) addresses this *where a component is Eulerian*.
 
+**Library-only in v1 (F5.3, John decision 2026-10-16).** `skeleton_to_strokes_euler` and `two_opt` are implemented and tested but **not wired into any CLI or pipeline path** — the `draw`/`info`/`sweep` commands always use `skeleton_to_strokes` (DFS) and the greedy `join_strokes`. CLI output therefore still contains the DFS out-and-back doubling and greedy connector ordering; U18's de-doubling and 2-opt's shorter tours are available to library callers only, with no CLI flags in v1.
+
 **8-connected parity (U18 finding).** On an 8-connected skeleton a corner is three mutually-adjacent pixels (an L plus its diagonal short-cut), so the corner pixel has **degree 3**. Most real skeleton loops therefore contain odd-degree vertices and are **not** Eulerian — `skeleton_to_strokes_euler` falls back to DFS on them, and only avoids doubling on clean even-degree loops (e.g. a 4-connected diamond, which is why the U18 test fixture is a 45° diamond, not a square). Dropping diagonal short-cut edges before the parity check (prefer 4-adjacency) would enable Euler on more loops — deferred (F5.5).
 
 ### `io/fetch.py`

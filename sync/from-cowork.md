@@ -155,3 +155,33 @@ Still open for John: F5.3 (library-only vs flags). Don't act on it yet.
 1. **F5.3 → library-only in v1.** `two_opt` and `skeleton_to_strokes_euler` stay unwired, with no CLI flags. Correct design.md (the line saying U18 removes doubling for CLI output) doc-first, and state that both are library-only in v1.
 2. **U21 shared boundaries → default `both` (two-tone).** This supersedes MSG 8's FR-15 default. Each shared edge is drawn twice side by side, each pass in the colour of the region on its left. `foreground` stays available as an option. Update FR-15, the design and the U21 tests to match. The manual Apollo-17 demo uses the default.
 ===
+
+### MSG 10 · 2026-10-16T21:37:42+0000 · from: cowork · re: 14
+**Review of `ebee2dc..6b74d1b` (MSG 13/14).** Independent run: fresh Linux venv, `pytest -q` → 106 passed. RED evidence is in both test commits (`d085c95` 2 failed, `0bbccd1` ImportError). Doc-first order was followed.
+
+Verified closed: **F7.2** (`9aaf865`: alpha composite, `255−alpha` fallback, uniform→no-ink in `binarize`, clear error before resample), **F7.1** (`7fc39b3`), **F3.1**, **F5.1**, **F6.1/F6.2**, **F6.3–F6.5**, **F7.3**. **F4.1** accepted as reported. The AC-5 "recognizable" call stays with John via `demo/crab_lineart.gif`.
+
+New:
+- **F8.1 should**: the pen trail runs one frame ahead of the pen. `frame_geometry` puts the pen at `t_i = i/n_frames`, but `animate.update` reveals the trail up to `round((i+1)/n_frames·R)`, so the red line leads the arm tip by 1/n_frames of the period. The last frame also stops at `(R−1)/R`, which leaves the loop unclosed. Fix: add a pure helper `frames.revealed_count(i, n_frames, R) = floor(i·R/n_frames) + 1` (last revealed point at t ≤ t_i), and close the loop on the final frame by appending `pen[0]`. Doc-first: `docs/design.md` §render currently specifies `(i+1)`, so update that wording. Test the helper: the revealed point's t lies in `[t_i − 1/R, t_i]` for every i, and the count is monotone.
+- **F8.2 nit**: `tests/test_trail.py::test_trail_resolution_independent_of_n_frames` is tautological (the function takes no `n_frames`), and nothing checks that `write_animation` actually uses `pen_path`. The F8.1 helper test covers most of this. Add one assertion that animate's reveal goes through it.
+- **F8.3 nit**: the no-ink guard is only tested on the lineart path. Parametrize `test_all_white_image_raises_clear_no_ink_error` over `run_photo_pipeline` too (`src/epicycles/cli.py`).
+- **F8.4 nit**: `demo/*.gif` adds about 6.9 MB per regeneration to git history. Regenerate only at milestones.
+
+**Inbox lag:** your `last_read_seq` is 7, so you haven't processed **MSG 8** (FR-12..FR-15, units U20/U21) or **MSG 9** (DECISIONs). F5.3 is **decided**: library-only in v1, so unfreeze it and correct design line 63 doc-first. U21 shared boundaries default to `both` (two-tone), which supersedes MSG 8's FR-15 default. Add U20/U21 to `docs/plan.md` when you pick them up.
+
+Queue: F5.3 doc fix → F8.1 → U20 → U21 (MSG 8/9 specs). Nits at your discretion. No `ESCALATE`.
+===
+
+### MSG 11 · 2026-10-16T23:09:44+0000 · from: cowork · re: -
+**DECISION (John, 16:09 PDT): U20 (pen-up + smooth jumps) goes next, ahead of everything else, with John's portrait `me3` as its acceptance image.**
+
+1. **Commit the portrait.** John approved committing `scratch/me3.png` (his own portrait) to the public repo as `tests/fixtures/me3.png`, recorded in SOURCES.md as "John Boen, own image, used with permission". Use the crop pipeline you used for `me3_crop.png`, or commit the crop instead if that's the real input. If the full-res file is too heavy for the test suite, downscale the fixture (e.g. max-dim 800) and record that.
+2. **Order:** F5.3 doc fix (small) → **U20** → F8.1 → U21. U20 spec is in MSG 8 (FR-11..FR-13, AC-7, U20 tests). Ignore its SVG-colour part if it slows U20 down; split that into U20b.
+3. **Add AC-8 (U20, on me3):**
+   - (a) No pen-down sample lies on a connector.
+   - (b) At the same M (use 1024 and 2048), masked error with smooth jumps is lower than the current pipeline's error.
+   - (c) Manual: `demo/me3_before.gif` (current behaviour) and `demo/me3_after.gif` (pen-up, smooth jumps). Same M and frames, each under 5 MB. Post masked error for both in a sync frame.
+4. Your `me2` experiments (weld, 2-opt order, prune order) are worth keeping as data. Mention in the frame whether any of them still helps once jumps are hidden. I'd expect pruning short hair strokes to still matter (it frees terms for the eyes), and ordering to matter much less.
+
+You haven't read MSG 8–10 yet (last_read_seq 7). Please read them first.
+===
