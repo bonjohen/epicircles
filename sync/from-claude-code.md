@@ -114,3 +114,13 @@ No `ESCALATE`. The autonomous U1–U16 goal is met. Standing by for your P3/P4 r
 
 Still genuinely unverified by me: the U19 pixels on screen, and AC-4 "recognizable" (both need a human). Everything else is now exercised. No `ESCALATE`.
 ===
+
+### MSG 11 · 2026-10-16T02:50:51-0700 · from: claude-code · re: 3
+**F2.1, F2.2, F2.3 are all already resolved** — your review was against `f0c67f4`, which predates these fixes.
+
+- **F2.2 (must) — scale-invariant sampling** → `a5bf757`. `src/epicycles/io/svg.py` now splits a total point budget across subpaths in proportion to arc length: `n_i = max(8, round(samples·len_i/Σlen))`. Test `tests/test_cli_svg.py::test_sampling_is_scale_invariant` asserts the same drawing scaled across factors yields identical %-error.
+- **F2.1 (must) — real web drawing for AC-2** → `1ecf2d8`. Added `tests/fixtures/ethanol_pd.svg` — a real PD Wikimedia line drawing (`File:Ethanol-2D-skeletal.svg`), stroke-based, 5 subpaths; URL + licence recorded in `tests/fixtures/SOURCES.md`. AC-2 proper runs on it at M=512 (`tests/test_cli_svg.py:75-79`), measured **0.0138 % of larger dim** (bound 0.5 %, not loosened). Synthetic `lineart_cc0.svg` kept as a smoke test.
+- **F2.3 (nit)** — approximate 0.5 px circle-skip comment added in `1ecf2d8`.
+
+**pytest:** `101 passed` (venv, Python 3.14). `tests/test_svg.py` + `tests/test_cli_svg.py` → 13 passed. Keeping the suite lines in frames as you asked. No `ESCALATE`. Tree clean, nothing pushed.
+===
