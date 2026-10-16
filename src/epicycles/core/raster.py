@@ -7,10 +7,14 @@ centreline. Edge detection and pruning are added in later units.
 from __future__ import annotations
 
 import numpy as np
+from scipy.ndimage import convolve
 from skimage.feature import canny
 from skimage.filters import threshold_otsu
+from skimage.measure import label
 from skimage.morphology import skeletonize
 from skimage.util import img_as_float
+
+_DEG_KERNEL = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
 
 
 def binarize(gray: np.ndarray, threshold: int | None = None) -> np.ndarray:
@@ -34,6 +38,88 @@ def edges(gray: np.ndarray, sigma: float, low: float, high: float) -> np.ndarray
     """
     f = img_as_float(np.asarray(gray))
     return canny(f, sigma=sigma, low_threshold=low, high_threshold=high)
+
+
+def _degree(skel: np.ndarray) -> np.ndarray:
+    """8-neighbour count for each pixel (0 off-skeleton pixels included)."""
+    return convolve(skel.astype(int), _DEG_KERNEL, mode="constant", cval=0)
+
+
+_RING = ((-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1))
+
+
+def _neighbours8(r: int, c: int, skel: np.ndarray):
+    h, w = skel.shape
+    for dr, dc in _RING:
+        nr, nc = r + dr, c + dc
+        if 0 <= nr < h and 0 <= nc < w and skel[nr, nc]:
+            yield nr, nc
+
+
+def _neighbour_groups(r: int, c: int, skel: np.ndarray) -> int:
+    """Number of 8-connected groups of set pixels around (r, c) on the 3x3 ring.
+
+    Endpoint -> 1, mid-path -> 2, junction -> >=3. Using groups (not raw degree)
+    avoids counting a pass-through pixel that merely touches the main line
+    diagonally as a junction.
+    """
+    h, w = skel.shape
+    ring = [
+        0 <= r + dr < h and 0 <= c + dc < w and skel[r + dr, c + dc]
+        for dr, dc in _RING
+    ]
+    if all(ring):
+        return 1
+    return sum(1 for i in range(8) if ring[i] and not ring[i - 1])
+
+
+def prune(skel: np.ndarray, min_component_px: int, spur_len: int) -> np.ndarray:
+    """Drop small 8-connected components and remove short dead-end branches."""
+    skel = np.asarray(skel, dtype=bool).copy()
+
+    # 1. Remove components smaller than min_component_px.
+    labels = label(skel, connectivity=2)
+    if labels.max() > 0:
+        counts = np.bincount(labels.ravel())
+        for lab in range(1, labels.max() + 1):
+            if counts[lab] < min_component_px:
+                skel[labels == lab] = False
+
+    # 2. Iteratively remove dead-end branches shorter than spur_len. A branch
+    #    runs from a free endpoint (1 neighbour group) to a junction (>=3
+    #    groups); it is a spur if it reaches a junction in fewer than spur_len
+    #    pixels.
+    changed = True
+    while changed:
+        changed = False
+        pixels = list(zip(*np.where(skel)))
+        groups = {p: _neighbour_groups(*p, skel) for p in pixels}
+        junction = {p for p, g in groups.items() if g >= 3}
+        endpoints = [p for p, g in groups.items() if g == 1]
+        for ep in endpoints:
+            branch: list[tuple[int, int]] = []
+            seen = {ep}
+            frontier = [ep]
+            reached_junction = False
+            while frontier and len(branch) < spur_len:
+                cur = frontier.pop()
+                branch.append(cur)
+                if any(nb in junction for nb in _neighbours8(*cur, skel)):
+                    # cur abuts the junction: stop here, do not leak past it
+                    # (its other neighbours belong to the trunk, reachable only
+                    # via 8-diagonals around the junction).
+                    reached_junction = True
+                    continue
+                for nb in _neighbours8(*cur, skel):
+                    if nb not in seen and nb not in junction:
+                        seen.add(nb)
+                        frontier.append(nb)
+            if reached_junction and len(branch) < spur_len:
+                for p in branch:
+                    skel[p] = False
+                changed = True
+
+    return skel
 
 
 # Neighbour offsets in fixed order N, NE, E, SE, S, SW, W, NW (row, col deltas).
