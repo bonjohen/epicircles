@@ -77,8 +77,8 @@ The lineart and photo pipelines raise a clear `ValueError("no ink found in image
 `to_json(spec_selected, n:int, mode) -> str` — keys sorted, floats via `repr(float(x))`, terms in selection order. NFR-1 is tested on this string.
 
 ### `render/`
-- `frames.py` (pure): `frame_geometry(spec, n_frames) -> list[FrameGeom]` where `FrameGeom = {centers (m-1,), radii (m-1,), pen complex}`: `centers = chain[:-1]`, `radii = |c|` of terms 1..m−1 in selection order, `pen = chain[-1]`; `t_j = j/n_frames`.
-- `animate.py` (I/O): matplotlib `FuncAnimation` over `frame_geometry`; draws circles (skip radius < 0.5 px on screen), radius segments, accumulated pen trail, optional faint original path. Writer: Pillow GIF; ffmpeg MP4 if available.
+- `frames.py` (pure): `frame_geometry(spec, n_frames) -> list[FrameGeom]` where `FrameGeom = {centers (m-1,), radii (m-1,), pen complex}`: `centers = chain[:-1]`, `radii = |c|` of terms 1..m−1 in selection order, `pen = chain[-1]`; `t_j = j/n_frames`. `trail_resolution(n_terms, n_samples=0) -> int = max(8·n_terms, n_samples, 2)` and `pen_path(spec, resolution) -> complex[(resolution,)] = evaluate(spec, arange(R)/R)` give the **dense** pen trajectory.
+- `animate.py` (I/O): matplotlib `FuncAnimation` over `frame_geometry`; draws circles (skip radius < 0.5 px on screen), radius segments, the pen trail, optional faint original path. **The pen trail is sampled densely, not per frame**: it is `pen_path(spec, R)` with `R = trail_resolution(m, N)` (`N` = len(original) or 0), independent of `n_frames`, and revealed up to `round((i+1)/n_frames · R)` points on frame `i`. Frames set only the *timing*; the curve's resolution comes from `R`, so a high-term curve is smooth even at few frames (previously the trail was one point per frame, drawing an `n_frames`-gon). Writer: Pillow GIF; ffmpeg MP4 if available.
 - `sweep.py`: grid of `evaluate` traces for a list of m.
 
 ### `cli.py`
