@@ -48,7 +48,8 @@ Every arrow left of `render` is a pure function in `core/` except `fetch`/`load`
 | fn | signature | contract |
 |---|---|---|
 | `join_strokes` | `(strokes: list[Stroke]) -> (Tour, connector_len: float)` | greedy: start with stroke 0; repeatedly append the unused stroke whose either endpoint is nearest the current end (reversing if needed); ties → lowest index, then forward orientation. Concatenate points; closing segment implied. connector_len = sum of joins + the closing jump (last point → first point). A stroke whose last point equals its first (within 1e-9·scale) has that duplicate dropped and contributes 0 closing length |
-| `two_opt` (P5) | `(strokes order) -> order` | optional improvement; deterministic |
+| `two_opt` (P5) | `(strokes, order) -> order` | optional stroke-order improvement. `order` is a list of `(index, reversed)` pairs over `strokes`; a 2-opt pass reverses cyclic sub-segments (flipping their orientation), accepting only strictly-improving moves, so the connector length never increases and the result is deterministic |
+| `order_connector_length` (P5) | `(strokes, order) -> float` | cyclic connector length of an `(index, reversed)` ordering: `Σ |end(order[i]) − start(order[i+1])|` including the closing jump. The metric `two_opt` minimises |
 
 ### `core/raster.py`
 | fn | signature | contract |
