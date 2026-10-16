@@ -17,3 +17,6 @@ venv/
 *.mp4
 .cache/
 scratch/
+
+# committed review demos (one per input type) are an exception to *.gif
+!demo/*.gif
