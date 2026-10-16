@@ -56,3 +56,32 @@ def spectrum(z: np.ndarray) -> Spectrum:
     n = z.shape[0]
     c = np.fft.fftshift(np.fft.fft(z)) / n
     return Spectrum(_canonical_k(n), c.astype(np.complex128))
+
+
+def evaluate(spec: Spectrum, t: np.ndarray) -> np.ndarray:
+    """Reconstruct the path at parameters ``t``.
+
+    ``ẑ(t) = Σ_k c_k e^{2πi k t}`` for each ``t`` (sample ``n`` ↔ ``t=n/N``).
+    Order-independent: the sum is over all terms regardless of their arrangement
+    in ``spec``.
+    """
+    t = np.asarray(t, dtype=np.float64)
+    # phase[i, j] = e^{2πi k_j t_i};  result[i] = Σ_j c_j phase[i, j].
+    phase = np.exp(2j * np.pi * np.outer(t, spec.k))
+    return phase @ spec.c
+
+
+def chain(spec: Spectrum, t: float) -> np.ndarray:
+    """Cumulative partial sums of the rotating terms at a single ``t``.
+
+    Returns ``m`` points in selection order: ``chain[0]`` is the anchor ``c_0``
+    (the k=0 term does not rotate), ``chain[j]`` is the centre of circle
+    ``j+1``, and ``chain[-1]`` is the pen position ``evaluate(spec, [t])[0]``.
+
+    Requires ``spec.k[0] == 0`` (i.e. a ``select`` result); raises
+    :class:`ValueError` otherwise.
+    """
+    if spec.k.shape[0] == 0 or spec.k[0] != 0:
+        raise ValueError("chain requires the k=0 term at index 0 (a select result)")
+    terms = spec.c * np.exp(2j * np.pi * spec.k * float(t))
+    return np.cumsum(terms)
