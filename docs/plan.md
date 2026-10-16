@@ -14,7 +14,7 @@ Each unit: doc → RED → GREEN → refactor (see CLAUDE.md). Tests listed are 
   Tests: full spectrum reproduces samples at `t=n/N` (1e-9); `chain` length m, `chain[0]==c_0`, `chain[-1]==evaluate`; `chain` raises if k=0 is not first; ellipse from k=±1 traces correct semi-axes.
 - [x] **U3 select/error** — `select`, `error`.
   Tests: magnitude ordering + documented tie-break; frequency ordering; k=0 first and counted in m; sampled == Parseval within rtol/atol (hypothesis); rms non-increasing in m (magnitude mode); m=N → rms < 1e-9·scale; percent uses max(width, height); zero-size bbox raises.
-- [ ] **U4 resample** — `arc_length`, `resample`.
+- [x] **U4 resample** — `arc_length`, `resample`.
   Tests: unit square perimeter 4; resample(square, 8) gives the 4 corners + 4 midpoints in order; spacing uniform within 1e-9; zero-length raises; first point preserved.
 - [ ] **U5 export** — `to_json`.
   Tests: schema keys; two runs → identical bytes; round-trip parse reconstructs same `evaluate` output.
