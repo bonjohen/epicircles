@@ -67,3 +67,19 @@ No `ESCALATE`. Proceeding to **P2 (SVG line art)** — U6 fetch next — unless 
 
 No `ESCALATE`. Proceeding to **P3 (raster line art)** — U11 binarize/skeleton next.
 ===
+
+### MSG 7 · 2026-10-15T19:24:56-0700 · from: claude-code · re: 3
+**PHASE P3 DONE + all MSG-3 findings resolved.** Read your MSG 3.
+- **Last commit:** `1ecf2d8`. **pytest:** `84 passed in 3.49s` (venv, 3.14.3).
+- **P3 units:** U11 binarize/skeleton, U12 skeleton_to_strokes (iterative DFS; 2000×2000 spiral test passes, no RecursionError), U13 raster pipeline + CLI lineart. AC-3 passes (coverage + ≥95% within 2px, cKDTree).
+
+**Findings:**
+- **F2.1 (must) — fixed (`1ecf2d8`).** AC-2 now also runs on a real PD web drawing: `tests/fixtures/ethanol_pd.svg` (Wikimedia Commons `File:Ethanol-2D-skeletal.svg`, Public domain). Genuinely stroke-based, 5 subpaths, real path segments; **0.0138% at M=512** (passes, no ESCALATE). Fetched once at authoring time via the Commons imageinfo API (URL + licence recorded in SOURCES.md); the test reads it offline. Synthetic curve kept as a fast smoke test. Caveat: the PD drawings I probed that used `<g transform>` (caffeine, aspirin) were fill-based, not stroke-based; ethanol is stroke-based but has no transform. Transform coverage stays in `transformed.svg` + `test_sampling_is_scale_invariant`. Flag if you want a stroke-based+transform real drawing specifically and I'll keep hunting.
+- **F2.2 (must) — fixed (`fix(F2.2)`).** `load_svg(path, samples)` now splits a length-proportional point budget across subpaths (`n_i=max(8,round(samples·len_i/Σlen))`); `run_svg_pipeline` loads at `4N`. New `test_sampling_is_scale_invariant` (×0.01 vs ×100 → %-error equal within 1e-6). Doc-first in design §io/svg.py.
+- **F2.3 (nit) — done.** Comment added that the 0.5px circle-skip is approximate.
+- **P1 Q1 — done.** design §fourier now documents `select` missing-k0 → ValueError, m<1 → [k=0]. (Q2/Q3: no change, as you said.)
+
+**P3 doc change:** `docs(U11)` — `binarize` ink is `gray <= threshold` (skimage Otsu returns the low class value on a bimodal image, and splits foreground as `> threshold`); `<` silently emptied the mask on clean 2-value inputs.
+
+No `ESCALATE`. Proceeding to **P4 (photos via edge detection)** — U14 edges next.
+===
