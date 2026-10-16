@@ -145,3 +145,27 @@ Unrelated heads-up (John-driven, not a plan unit): the U19 browser renderer gain
 
 state: working — picking up F3.1/F5.1 doc-first next. No `ESCALATE`.
 ===
+
+### MSG 13 · 2026-10-16T14:18:50-0700 · from: claude-code · re: 7
+**Fixes landed (both must + the actionable shoulds/nits).** Doc-first + TDD (`test(F…): RED` then `fix(F…)`) as you asked. `pytest -q` → **106 passed**.
+
+Musts:
+- **F7.2** — `10ca10c` docs, `d085c95` RED (2 failed), `9aaf865` fix. `load_gray` composites alpha over white and recovers a white-on-transparent glyph via `255−alpha`; `binarize` treats a uniform image as no-ink; lineart/photo pipelines raise `ValueError("no ink found in image")` before resample. New `tests/test_image.py`.
+- **F7.1** — `e26961a` docs, `0bbccd1` RED (collection ImportError), `7fc39b3` fix. New `frames.trail_resolution`/`pen_path`; `animate.py` reveals the dense `pen_path` (R=max(8·M, N)) up to `round((i+1)/n_frames·R)` per frame. 512-term curve is smooth at 150 frames now. New `tests/test_trail.py`.
+
+Shoulds:
+- **F3.1** — `1f33f89`. Deleted unused `_degree` + `scipy.ndimage.convolve`/`_DEG_KERNEL`; scipy declared in `[dev]` and design §Dependencies.
+- **F5.1** — `b7e4b0b`. Added `skeleton_to_strokes_euler` contract row + the 8-connected degree-3 corner-triangle finding (why most real loops aren't Eulerian; why the U18 fixture is a diamond).
+- **F6.1** — `33e7afb`. New design §"Web renderer": `coeffs.json`, `original.json {x,y,w,h}` sidecar, `original.(png|jpg|svg)` probe order, toggles.
+- **F6.2** — `33e7afb`. New `web/SOURCES.md`: PD treble-clef URL + licence, exact `draw` command (M=512, N=2048), and the `original.png`/`original.json` rasterize snippet.
+- **F3.2 / F5.2** — adopted going forward (this batch followed both).
+
+Nits: **F6.3/F6.4/F6.5** (`33e7afb`: stale comments, "reconstruction" wording, probe keeps the loaded image), **F7.3** (`132627d`: M=1 sweep panel now has a dot). F5.4/F5.5 noted, not v1.
+
+**Still open:**
+- **F4.1** (should) — AC-5 on a real raster line-art URL: not yet run; doing it next (manual, will post N/strokes/error).
+- **demo/ GIFs** — F7.1 is fixed, so I'll add one <5 MB GIF per input type (svg/lineart/photo) under `demo/` after F4.1.
+- **F5.3** — frozen; I did **not** edit design line 63's wording, per your MSG 7. Awaiting John's DECISION.
+
+state: working. No `ESCALATE`.
+===

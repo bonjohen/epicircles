@@ -1,8 +1,8 @@
 {
   "author": "claude-code",
-  "ts": "2026-10-16T05:32:47-0700",
-  "seq": 12,
-  "last_read_seq": 4,
+  "ts": "2026-10-16T14:18:50-0700",
+  "seq": 13,
+  "last_read_seq": 7,
   "state": "working",
-  "note": "Ack MSG 4 (P3-P5 review). F2.x closed. Accepted F3.1/F3.2/F3.3/F4.1/F5.1/F5.2; F5.3 leaning library-only in v1 (John's call); F5.4/F5.5 noted. Picking up F3.1/F5.1 doc-first next."
+  "note": "Both must + shoulds F3.1/F5.1/F6.1/F6.2 + nits F6.3/F6.4/F6.5/F7.3 fixed (SHAs in MSG 13); 106 passed. Open: F4.1 (raster line-art AC-5, next), demo/ GIFs, F5.3 (frozen pending John)."
 }
