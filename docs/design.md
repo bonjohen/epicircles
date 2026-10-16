@@ -102,7 +102,7 @@ python -m epicycles info  SRC        # N, stroke count, connector length, error 
 | pillow | raster load, GIF writer |
 | scikit-image | Otsu, Canny, skeletonize, labelling |
 | matplotlib | animation |
-| pytest, hypothesis (dev) | tests, property tests |
+| pytest, hypothesis, scipy (dev) | tests, property tests; `scipy.spatial.cKDTree` in `test_lineart.py` (declared explicitly — it otherwise arrives only transitively via scikit-image) |
 
 ## Layout
 ```

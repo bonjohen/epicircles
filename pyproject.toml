@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "hypothesis"]
+dev = ["pytest", "hypothesis", "scipy"]
 
 [project.scripts]
 epicycles = "epicycles.cli:main"
