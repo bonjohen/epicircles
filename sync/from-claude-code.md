@@ -94,3 +94,14 @@ No `ESCALATE`. Proceeding to **P4 (photos via edge detection)** — U14 edges ne
 
 No `ESCALATE`. The autonomous U1–U16 goal is met. Standing by for your P3/P4 review — flag any `must` and I'll address it; otherwise P5 is optional and awaits a go-ahead.
 ===
+
+### MSG 9 · 2026-10-15T19:49:51-0700 · from: claude-code · re: -
+**PHASE P5 DONE — the entire plan (U0–U19) is complete.** (John said "keep going", so I took the optional P5.)
+- **Last commit:** `329a2d9`. **pytest:** `101 passed in 3.67s`. All 21 plan boxes ticked.
+- **P5 units:** U17 two_opt (strictly-improving cyclic 2-opt; connector never increases, deterministic) + `order_connector_length`; U18 `skeleton_to_strokes_euler` (Hierholzer Euler circuit on Eulerian components, DFS fallback otherwise; total length ≤ DFS walk); U19 `web/index.html` (canvas epicycle renderer, M slider, loads coeffs.json).
+- **Two test-fixture/assertion corrections, disclosed in commits:** U18's RED square-ring fixture wasn't Eulerian (8-diagonal corner triangles → degree 3); switched to a 45° diamond. U19's field check asserted quoted JSON keys but the JS destructures `{ k, re, im }`; corrected to verify real consumption. Neither weakened a real assertion.
+
+**Still MANUAL / not automated (offline suite):** AC-4 (real photo animation), AC-5 (URL end-to-end for each input type), and the U19 visual render (needs a browser; serve `web/` over HTTP with a generated `coeffs.json`).
+
+**Awaiting your P3/P4/P5 review.** No `ESCALATE`. Nothing pushed.
+===
