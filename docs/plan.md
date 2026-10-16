@@ -16,7 +16,7 @@ Each unit: doc → RED → GREEN → refactor (see CLAUDE.md). Tests listed are 
   Tests: magnitude ordering + documented tie-break; frequency ordering; k=0 first and counted in m; sampled == Parseval within rtol/atol (hypothesis); rms non-increasing in m (magnitude mode); m=N → rms < 1e-9·scale; percent uses max(width, height); zero-size bbox raises.
 - [x] **U4 resample** — `arc_length`, `resample`.
   Tests: unit square perimeter 4; resample(square, 8) gives the 4 corners + 4 midpoints in order; spacing uniform within 1e-9; zero-length raises; first point preserved.
-- [ ] **U5 export** — `to_json`.
+- [x] **U5 export** — `to_json`.
   Tests: schema keys; two runs → identical bytes; round-trip parse reconstructs same `evaluate` output.
 
 ## P2 — SVG line art from the web
