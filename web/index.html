@@ -40,6 +40,7 @@
       <input id="speed" type="range" min="1" max="200" value="60" />
     </label>
     <label><input id="showCircles" type="checkbox" checked /> circles</label>
+    <label><input id="showTarget" type="checkbox" checked /> target image</label>
     <button id="reset">restart trail</button>
     <span id="status" class="hint">loading coeffs.json…</span>
   </div>
@@ -54,6 +55,7 @@ const termsSlider = document.getElementById("terms");
 const termsVal = document.getElementById("termsVal");
 const speedSlider = document.getElementById("speed");
 const showCircles = document.getElementById("showCircles");
+const showTarget = document.getElementById("showTarget");
 const statusEl = document.getElementById("status");
 document.getElementById("reset").onclick = () => { trail.length = 0; };
 
@@ -61,6 +63,7 @@ let spec = null;          // { N, ordering, terms:[{k,re,im}] }
 let view = null;          // {cx, cy, scale} mapping drawing -> canvas
 let t = 0;
 const trail = [];
+let targetPath = [];      // full-term reconstruction = the original drawing (in drawing coords)
 
 async function load() {
   try {
@@ -104,6 +107,12 @@ function computeView() {
   const pad = 0.1;
   const scale = Math.min(canvas.width / (w * (1 + pad)), canvas.height / (h * (1 + pad)));
   view = { scale, ox: (minX + maxX) / 2, oy: (minY + maxY) / 2 };
+
+  // Sample the full reconstruction (all terms) over one period — this closed
+  // curve IS the original drawing; it's shown as a faint reference underlay.
+  targetPath = [];
+  const steps = 2000;
+  for (let i = 0; i <= steps; i++) targetPath.push(evalAt(i / steps));
 }
 
 // drawing coords (y up) -> canvas pixels (y down)
@@ -116,6 +125,18 @@ function frame() {
   const m = parseInt(termsSlider.value, 10);
   termsVal.textContent = String(m);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // faint underlay of the full target drawing (the "initial image")
+  if (showTarget.checked && targetPath.length) {
+    ctx.strokeStyle = "rgba(120,170,255,0.35)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    targetPath.forEach(([x, y], i) => {
+      const [px, py] = toPx(x, y);
+      return i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+    });
+    ctx.stroke();
+  }
 
   // chain of circles / radius vectors, partial sums in selection order
   let x = 0, y = 0;
