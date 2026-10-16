@@ -69,7 +69,9 @@ DFS retrace doubles path length but always yields a valid closed walk; that is t
 `load_svg(path, samples_per_unit: float) -> list[Stroke]` — `svgpathtools.Document(path).paths()` (svgpathtools ≥ 1.8; this method replaced `flatten_all_paths`) so group and element `transform`s are applied to the returned path geometry (plain `svg2paths` ignores them, and most web clipart uses them). Basic shapes (circle, rect, line, polyline) are converted to paths. Each `continuous_subpaths()` piece → one Stroke. Sampling is **scale-invariant**: the total point budget `samples` is split across subpaths in proportion to their arc length, `n_i = max(8, round(samples · len_i / Σlen))`. (An absolute per-unit density would collapse small-viewBox icons — e.g. `0 0 24 24` — to 8-point polygons, losing the curves before the DFT.) Points are taken at `linspace(0,1,n_i)`; y negated. Closed subpaths keep their closing point (dropped later by `join_strokes`).
 
 ### `io/image.py`
-`load_gray(path, max_dim:int) -> uint8 HxW` — Pillow, convert "L", downscale (LANCZOS) so max(H,W) ≤ max_dim.
+`load_gray(path, max_dim:int) -> uint8 HxW` — Pillow. Images carrying alpha (`RGBA`/`LA`/palette-with-transparency) are **composited over white** before the "L" conversion, so transparent regions read as background rather than as undefined RGB. Special case: if that composite is **uniform** while the alpha channel is **not** (e.g. a white glyph on a transparent field — flattening over white would make it all-white and misdetect as a blank photo), the alpha channel is used as ink instead: `gray = 255 − alpha`. Then downscale (LANCZOS) so max(H,W) ≤ max_dim.
+
+The lineart and photo pipelines raise a clear `ValueError("no ink found in image")` when edge/skeleton extraction yields **no strokes**, checked before `resample` (otherwise the failure surfaces as the lower-level "cannot resample a zero-length tour").
 
 ### `io/export.py`
 `to_json(spec_selected, n:int, mode) -> str` — keys sorted, floats via `repr(float(x))`, terms in selection order. NFR-1 is tested on this string.
