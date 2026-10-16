@@ -19,7 +19,11 @@ from matplotlib.animation import FuncAnimation, PillowWriter  # noqa: E402
 from matplotlib.patches import Circle  # noqa: E402
 
 from epicycles.core.fourier import Spectrum  # noqa: E402
-from epicycles.render.frames import frame_geometry  # noqa: E402
+from epicycles.render.frames import (  # noqa: E402
+    frame_geometry,
+    pen_path,
+    trail_resolution,
+)
 
 
 def write_animation(
@@ -32,9 +36,13 @@ def write_animation(
     """Write an animated GIF of the epicycle reconstruction to ``out_path``."""
     out_path = Path(out_path)
     geoms = frame_geometry(spec, n_frames)
-    pens = np.array([g.pen for g in geoms], dtype=np.complex128)
 
-    pts = pens if original is None else np.concatenate([pens, original])
+    # Dense pen trail, sampled by term count (not n_frames), revealed over time.
+    n_samples = 0 if original is None else len(original)
+    resolution = trail_resolution(len(spec.c), n_samples)
+    pen = pen_path(spec, resolution)
+
+    pts = pen if original is None else np.concatenate([pen, original])
     pad = 0.05 * max(float(np.ptp(pts.real)), float(np.ptp(pts.imag)), 1.0)
     xlim = (pts.real.min() - pad, pts.real.max() + pad)
     ylim = (pts.imag.min() - pad, pts.imag.max() + pad)
@@ -64,9 +72,6 @@ def write_animation(
     (radius_line,) = ax.plot([], [], lw=0.5, color="0.4")
     (trail,) = ax.plot([], [], lw=1.5, color="tab:red")
 
-    trail_x: list[float] = []
-    trail_y: list[float] = []
-
     def update(i: int):
         g = geoms[i]
         for c, centre, r in zip(circles, g.centers, g.radii):
@@ -78,9 +83,9 @@ def write_animation(
                 c.set_visible(False)
         chain_pts = np.append(g.centers, g.pen)
         radius_line.set_data(chain_pts.real, chain_pts.imag)
-        trail_x.append(g.pen.real)
-        trail_y.append(g.pen.imag)
-        trail.set_data(trail_x, trail_y)
+        # reveal the dense trail up to this frame's time t=(i+1)/n_frames
+        shown = round((i + 1) / n_frames * resolution)
+        trail.set_data(pen.real[:shown], pen.imag[:shown])
         return (*circles, radius_line, trail)
 
     anim = FuncAnimation(fig, update, frames=n_frames, blit=False)

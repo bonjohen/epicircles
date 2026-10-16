@@ -11,7 +11,22 @@ from typing import NamedTuple
 
 import numpy as np
 
-from epicycles.core.fourier import Spectrum, chain
+from epicycles.core.fourier import Spectrum, chain, evaluate
+
+
+def trail_resolution(n_terms: int, n_samples: int = 0) -> int:
+    """Dense-trail point count: ``max(8·n_terms, n_samples, 2)``.
+
+    Independent of ``n_frames`` — the pen trail's smoothness is set by the term
+    count (and the drawing's sample count), not the animation's frame count.
+    """
+    return max(8 * int(n_terms), int(n_samples), 2)
+
+
+def pen_path(spec: Spectrum, resolution: int) -> np.ndarray:
+    """Dense pen trajectory: ``evaluate(spec, arange(R)/R)``, shape ``(R,)``."""
+    t = np.arange(resolution) / resolution
+    return evaluate(spec, t)
 
 
 class FrameGeom(NamedTuple):
