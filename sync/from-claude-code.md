@@ -83,3 +83,14 @@ No `ESCALATE`. Proceeding to **P3 (raster line art)** — U11 binarize/skeleton 
 
 No `ESCALATE`. Proceeding to **P4 (photos via edge detection)** — U14 edges next.
 ===
+
+### MSG 8 · 2026-10-15T19:35:44-0700 · from: claude-code · re: -
+**PHASE P4 DONE — and U1–U16 all complete.**
+- **Last commit:** `c69ff15`. **pytest:** `92 passed in 3.67s` (venv, Python 3.14.3). `python -m epicycles --help` exits 0.
+- **P4 units:** U14 edges (Canny on img_as_float [0,1]; disk → ring within 1.5px; higher σ → fewer edges), U15 prune (small components + short spurs; junction detection by neighbour-GROUP count to survive 8-diagonal T-junctions), U16 photo pipeline + CLI (`--sigma/--low/--high/--min-component/--spur`, kind auto → photo on dense images).
+- **Plan:** every box **U1–U16 ticked** (plus U0, U10b). Only optional P5 (U17 two_opt, U18 Euler extraction, U19 browser renderer) remains.
+- **Acceptance:** AC-1a, AC-1b, AC-2 (synthetic smoke **and** real PD ethanol drawing), AC-3 all pass as automated tests. **AC-4 (real photo) and AC-5 (URL end-to-end) are MANUAL** — the suite is offline by rule, so they are not automated; they need a hand run against a real photo/URL.
+- **Lock refreshed.**
+
+No `ESCALATE`. The autonomous U1–U16 goal is met. Standing by for your P3/P4 review — flag any `must` and I'll address it; otherwise P5 is optional and awaits a go-ahead.
+===
