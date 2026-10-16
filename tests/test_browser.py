@@ -24,8 +24,11 @@ def test_browser_page_exists_with_canvas_and_slider():
 
 def test_browser_page_reads_export_fields():
     html = WEB.read_text(encoding="utf-8")
-    for token in ("terms", '"k"', '"re"', '"im"', "ordering", "N"):
-        assert token in html
+    # The page consumes the FR-9 fields (JS destructures {k, re, im}).
+    assert "spec.terms" in html
+    assert "{ k, re, im }" in html
+    assert "spec.ordering" in html or "ordering" in html
+    assert "spec.N" in html
 
 
 def test_exporter_schema_matches_page_contract():

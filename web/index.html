@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>epicycles — browser renderer</title>
+<style>
+  :root { color-scheme: dark; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; gap: 1rem; padding: 1.5rem 1rem;
+    background: #0e0f13; color: #e6e7ea;
+    font: 14px/1.5 system-ui, "Segoe UI", sans-serif;
+  }
+  h1 { font-size: 1rem; font-weight: 600; letter-spacing: .02em; opacity: .85; margin: 0; }
+  canvas { background: #15171d; border-radius: 10px; box-shadow: 0 6px 30px #0008; max-width: 92vw; }
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; align-items: center;
+    background: #1b1d25; padding: .75rem 1.1rem; border-radius: 10px;
+  }
+  .controls label { display: flex; align-items: center; gap: .5rem; white-space: nowrap; }
+  input[type="range"] { width: 220px; accent-color: #e5484d; }
+  .val { font-variant-numeric: tabular-nums; min-width: 4ch; text-align: right; opacity: .9; }
+  .hint { opacity: .6; font-size: 12px; }
+  button {
+    background: #e5484d; color: #fff; border: 0; border-radius: 7px;
+    padding: .45rem .8rem; cursor: pointer; font: inherit;
+  }
+</style>
+</head>
+<body>
+  <h1>epicycles</h1>
+  <canvas id="stage" width="720" height="720"></canvas>
+  <div class="controls">
+    <label>terms (M)
+      <input id="terms" type="range" min="1" max="1" value="1" />
+      <span id="termsVal" class="val">1</span>
+    </label>
+    <label>speed
+      <input id="speed" type="range" min="1" max="200" value="60" />
+    </label>
+    <label><input id="showCircles" type="checkbox" checked /> circles</label>
+    <button id="reset">restart trail</button>
+    <span id="status" class="hint">loading coeffs.json…</span>
+  </div>
+
+<script>
+// Loads the FR-9 coefficient file {N, ordering, terms:[{k,re,im}]} exported by
+// `python -m epicycles draw ... --json coeffs.json`. Serve this folder over
+// HTTP (e.g. `python -m http.server`) so fetch() can read coeffs.json.
+const canvas = document.getElementById("stage");
+const ctx = canvas.getContext("2d");
+const termsSlider = document.getElementById("terms");
+const termsVal = document.getElementById("termsVal");
+const speedSlider = document.getElementById("speed");
+const showCircles = document.getElementById("showCircles");
+const statusEl = document.getElementById("status");
+document.getElementById("reset").onclick = () => { trail.length = 0; };
+
+let spec = null;          // { N, ordering, terms:[{k,re,im}] }
+let view = null;          // {cx, cy, scale} mapping drawing -> canvas
+let t = 0;
+const trail = [];
+
+async function load() {
+  try {
+    const res = await fetch("coeffs.json");
+    spec = await res.json();
+  } catch (e) {
+    statusEl.textContent = "could not load coeffs.json — serve this folder over HTTP";
+    return;
+  }
+  termsSlider.max = String(spec.terms.length);
+  termsSlider.value = String(spec.terms.length);
+  termsVal.textContent = termsSlider.value;
+  statusEl.textContent = `N=${spec.N} · ordering=${spec.ordering} · ${spec.terms.length} terms`;
+  computeView();
+  requestAnimationFrame(frame);
+}
+
+// evaluate the full reconstruction at t: sum of all terms c_k e^{2πi k t}
+function evalAt(tt, m) {
+  let x = 0, y = 0;
+  const n = m === undefined ? spec.terms.length : m;
+  for (let i = 0; i < n; i++) {
+    const { k, re, im } = spec.terms[i];
+    const a = 2 * Math.PI * k * tt;
+    const c = Math.cos(a), s = Math.sin(a);
+    x += re * c - im * s;
+    y += re * s + im * c;
+  }
+  return [x, y];
+}
+
+// fit the drawing's bounding box (sampled over a full period) into the canvas.
+function computeView() {
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (let i = 0; i < 400; i++) {
+    const [x, y] = evalAt(i / 400);
+    minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+    minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+  }
+  const w = maxX - minX || 1, h = maxY - minY || 1;
+  const pad = 0.1;
+  const scale = Math.min(canvas.width / (w * (1 + pad)), canvas.height / (h * (1 + pad)));
+  view = { scale, ox: (minX + maxX) / 2, oy: (minY + maxY) / 2 };
+}
+
+// drawing coords (y up) -> canvas pixels (y down)
+function toPx(x, y) {
+  return [canvas.width / 2 + (x - view.ox) * view.scale,
+          canvas.height / 2 - (y - view.oy) * view.scale];
+}
+
+function frame() {
+  const m = parseInt(termsSlider.value, 10);
+  termsVal.textContent = String(m);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // chain of circles / radius vectors, partial sums in selection order
+  let x = 0, y = 0;
+  ctx.lineWidth = 1;
+  for (let i = 0; i < m; i++) {
+    const { k, re, im } = spec.terms[i];
+    const a = 2 * Math.PI * k * t;
+    const cs = Math.cos(a), sn = Math.sin(a);
+    const dx = re * cs - im * sn, dy = re * sn + im * cs;
+    const px = x + dx, py = y + dy;
+    if (showCircles.checked && i > 0) {
+      const r = Math.hypot(dx, dy) * view.scale;
+      if (r >= 0.5) {
+        const [c0x, c0y] = toPx(x, y);
+        ctx.strokeStyle = "rgba(255,255,255,0.14)";
+        ctx.beginPath(); ctx.arc(c0x, c0y, r, 0, 2 * Math.PI); ctx.stroke();
+      }
+    }
+    const [ax, ay] = toPx(x, y), [bx, by] = toPx(px, py);
+    ctx.strokeStyle = "rgba(255,255,255,0.5)";
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+    x = px; y = py;
+  }
+
+  trail.push(toPx(x, y));
+  if (trail.length > 4000) trail.shift();
+  ctx.strokeStyle = "#e5484d";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  trail.forEach(([tx, ty], i) => (i ? ctx.lineTo(tx, ty) : ctx.moveTo(tx, ty)));
+  ctx.stroke();
+
+  t = (t + parseInt(speedSlider.value, 10) / 100000) % 1;
+  requestAnimationFrame(frame);
+}
+
+load();
+</script>
+</body>
+</html>

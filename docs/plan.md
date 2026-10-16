@@ -43,4 +43,4 @@ Each unit: doc → RED → GREEN → refactor (see CLAUDE.md). Tests listed are 
 ## P5 — Optional
 - [x] **U17 two_opt** stroke-order improvement; test: connector length never increases, deterministic.
 - [x] **U18 Euler stroke extraction** to reduce retracing; test: total length ≤ DFS walk.
-- [ ] **U19 browser renderer** — single HTML page that loads `coeffs.json` and animates on canvas with an M slider.
+- [x] **U19 browser renderer** — single HTML page that loads `coeffs.json` and animates on canvas with an M slider.
