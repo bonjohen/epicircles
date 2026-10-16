@@ -27,7 +27,7 @@ Each unit: doc → RED → GREEN → refactor (see CLAUDE.md). Tests listed are 
 - [x] **U9 frames + animate** — Tests: `frame_geometry` count = n_frames; frame 0 pen == `evaluate(0)`; centers/radii length m−1; radii in selection order; `animate` writes a non-empty GIF with expected frame count (read back with Pillow, `n_frames`).
 - [x] **U10 CLI draw/info (SVG)** — Tests: `draw tests/fixtures/circle.svg --terms 3` produces GIF + JSON; `info` prints error table; **AC-1b**; **AC-2** on `lineart_cc0.svg` (commit a small public-domain, stroke-based SVG; record source URL + licence in `tests/fixtures/SOURCES.md`).
   Manual (**AC-5**, SVG): run on a URL (e.g. a CC0 SVG from Wikimedia Commons or openclipart) and eyeball the GIF.
-- [ ] **U10b sweep** — `render/sweep.py` + `sweep` command. Tests: grid PNG written; panel count = len(terms); traces come from `evaluate` with the given m (assert on data handed to the plotter, not pixels).
+- [x] **U10b sweep** — `render/sweep.py` + `sweep` command. Tests: grid PNG written; panel count = len(terms); traces come from `evaluate` with the given m (assert on data handed to the plotter, not pixels).
 
 ## P3 — Raster line art
 - [ ] **U11 binarize/skeleton** — synthetic fixtures drawn in-test with `PIL.ImageDraw` (3-px-wide rectangle outline, a "T").

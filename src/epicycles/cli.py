@@ -87,7 +87,15 @@ def build_parser() -> argparse.ArgumentParser:
     info.add_argument("--terms", type=int, default=256)
     info.add_argument("--order", choices=["magnitude", "frequency"], default="magnitude")
 
-    sub.add_parser("sweep", help="render a grid of reconstructions for several term counts")
+    sweep = sub.add_parser(
+        "sweep", help="render a grid of reconstructions for several term counts"
+    )
+    sweep.add_argument("src")
+    sweep.add_argument("--kind", choices=["auto", "svg", "lineart", "photo"], default="auto")
+    sweep.add_argument("--samples", default="auto")
+    sweep.add_argument("--terms", default="1,4,16,64,256,1024")
+    sweep.add_argument("--order", choices=["magnitude", "frequency"], default="magnitude")
+    sweep.add_argument("--out", dest="out_path", default="grid.png")
     return parser
 
 
@@ -129,6 +137,17 @@ def _cmd_info(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_sweep(args: argparse.Namespace) -> int:
+    _require_svg(args.src, args.kind)
+    terms = [int(x) for x in args.terms.split(",") if x.strip()]
+    res = run_svg_pipeline(args.src, args.samples, max(terms), args.order)
+    from epicycles.render.sweep import write_sweep
+
+    write_sweep(res.full, terms, args.out_path, args.order)
+    print(f"wrote {args.out_path} ({len(terms)} panels)")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -139,6 +158,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_draw(args)
     if args.command == "info":
         return _cmd_info(args)
+    if args.command == "sweep":
+        return _cmd_sweep(args)
     parser.error(f"command '{args.command}' is not implemented yet")
     return 2  # unreachable: parser.error() exits with status 2
 
