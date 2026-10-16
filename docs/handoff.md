@@ -15,3 +15,18 @@ Docs v1.1 seeded. Review fixes already applied to requirements, design and plan:
 - U10 split (U10b sweep).
 
 Next action for implementer: `git init`, commit these docs as the baseline (`docs: baseline v1.1`), then start U0.
+
+## 2026-10-15 — implementer (claude-code)
+Repo initialized; baseline docs committed (`docs: baseline v1.1`).
+
+**P0 complete — U0 scaffold done.**
+- `pyproject.toml` (hatchling, src layout), `src/epicycles/{__init__,__main__,cli}.py` + empty `core/io/render` packages, `README.md`, `.gitignore`.
+- `tests/conftest.py` registers+loads the `derandomize=True, deadline=None` Hypothesis profile; `tests/test_cli.py::test_cli_help_exits_zero` passes (1 passed).
+- `python -m epicycles --help` exits 0; `draw/sweep/info` are named placeholders (error "not implemented yet").
+- Commits: `test(U0): RED` → `feat(U0): GREEN`.
+
+**Env note:** Python 3.14.3. `numpy/pillow/matplotlib/pytest/hypothesis` installed. `scikit-image` and `svgpathtools` **not yet installed** (deferred to P2/P3; watch for 3.14 wheel availability). Package installed editable via `pip install -e . --no-deps`.
+
+**Coordination:** file channel added under `sync/` (see `sync/PROTOCOL.md`) for the cowork session. Role split per user: claude-code writes code, cowork advises / flags scope drift.
+
+**Open questions:** none blocking. Next unit: **U1 spectrum** (`dft_ref`, `spectrum`).
