@@ -20,7 +20,7 @@ Each unit: doc → RED → GREEN → refactor (see CLAUDE.md). Tests listed are 
   Tests: schema keys; two runs → identical bytes; round-trip parse reconstructs same `evaluate` output.
 
 ## P2 — SVG line art from the web
-- [ ] **U6 fetch** — Tests (monkeypatched `urllib.request.urlopen`): download once, second call no network; cache name = sha256 prefix + ext; extension from Content-Type when URL has none; unknown Content-Type raises; local path passthrough; User-Agent sent.
+- [x] **U6 fetch** — Tests (monkeypatched `urllib.request.urlopen`): download once, second call no network; cache name = sha256 prefix + ext; extension from Content-Type when URL has none; unknown Content-Type raises; local path passthrough; User-Agent sent.
 - [ ] **U7 load_svg** — fixtures `circle.svg` (a `<circle>` element), `square.svg`, `two_strokes.svg`, `transformed.svg` (path inside `<g transform="translate(10,20) scale(2)">`), `offset_viewbox.svg` (viewBox with nonzero min-y).
   Tests: circle → 1 stroke, points within 1e-6·r of radius; y negated (higher on screen → larger y); transform applied (matches hand-computed coordinates); offset viewBox handled; `two_strokes` → 2 strokes; sample count rule.
 - [ ] **U8 join_strokes** — Tests: single closed stroke → duplicate endpoint dropped, connector 0; single open segment → connector = its length (closing jump); two parallel segments joined with reversal, connector = join + closing jump, exact; deterministic on ties; output point count = sum of inputs minus dropped duplicates.
