@@ -33,7 +33,7 @@ Each unit: doc → RED → GREEN → refactor (see CLAUDE.md). Tests listed are 
 - [x] **U11 binarize/skeleton** — synthetic fixtures drawn in-test with `PIL.ImageDraw` (3-px-wide rectangle outline, a "T").
   Tests: Otsu picks ink on white bg; skeleton of 3-px rectangle is 1 px wide and stays within 1 px of the centreline.
 - [x] **U12 skeleton_to_strokes** — Tests: every skeleton pixel appears in the walk; consecutive points 8-adjacent (|Δ| ≤ √2); walk closed (last adjacent to first); "T" (a tree of p pixels) → 2(p−1) points; deterministic start pixel; pixel-centre coordinate mapping; a 2000×2000 spiral skeleton completes without `RecursionError`.
-- [ ] **U13 multi-component + CLI lineart** — two disjoint shapes → 2 strokes → one tour, connector reported; `--kind auto` picks lineart; `--samples auto` picks next power of two ≥ tour length (capped 16384); **AC-3** (coverage + 95 % rule at M=2048).
+- [x] **U13 multi-component + CLI lineart** — two disjoint shapes → 2 strokes → one tour, connector reported; `--kind auto` picks lineart; `--samples auto` picks next power of two ≥ tour length (capped 16384); **AC-3** (coverage + 95 % rule at M=2048).
 
 ## P4 — Photos via edge detection
 - [ ] **U14 edges** — Tests: filled disk image (uint8) → edge ring at radius ±1.5 px with default thresholds (proves the [0,1] conversion); higher sigma → fewer edge pixels on a noisy synthetic (seeded noise).

@@ -14,13 +14,17 @@ import numpy as np
 
 from epicycles.core.fourier import Spectrum, error, select, spectrum
 from epicycles.core.path import resample
+from epicycles.core.raster import binarize, skeleton, skeleton_to_strokes
 from epicycles.core.tour import join_strokes
 from epicycles.io.export import to_json
 from epicycles.io.fetch import fetch
+from epicycles.io.image import load_gray
 from epicycles.io.svg import load_svg
 
 _DEFAULT_CACHE = Path(".cache")
 _SVG_SAMPLES = 2048
+_MAX_SAMPLES = 16384
+_LINEART_INK_FRACTION = 0.15
 
 
 @dataclass
@@ -53,10 +57,63 @@ def run_svg_pipeline(
     return SvgResult(z, full, kept, len(strokes), connector_len, n, order)
 
 
+@dataclass
+class RasterResult:
+    z: np.ndarray
+    full: Spectrum
+    kept: Spectrum
+    n_strokes: int
+    connector_len: float
+    n: int
+    order: str
+    skel: np.ndarray
+
+
+def next_pow2_capped(count: int) -> int:
+    """Smallest power of two >= ``count``, capped at 16384."""
+    p = 1
+    while p < count:
+        p <<= 1
+    return min(p, _MAX_SAMPLES)
+
+
+def run_lineart_pipeline(
+    src: str,
+    samples: str | int,
+    terms: int,
+    order: str,
+    max_dim: int = 800,
+    threshold: int | None = None,
+    cache_dir: Path = _DEFAULT_CACHE,
+) -> RasterResult:
+    """Run the raster line-art path of the pipeline."""
+    path = fetch(src, cache_dir)
+    gray = load_gray(path, max_dim)
+    skel = skeleton(binarize(gray, threshold))
+    strokes = skeleton_to_strokes(skel)
+    tour, connector_len = join_strokes(strokes)
+    n = next_pow2_capped(len(tour)) if samples == "auto" else int(samples)
+    z = resample(tour, n)
+    full = spectrum(z)
+    kept = select(full, terms, order)
+    return RasterResult(z, full, kept, len(strokes), connector_len, n, order, skel)
+
+
+def detect_kind(
+    src: str, max_dim: int = 800, cache_dir: Path = _DEFAULT_CACHE
+) -> str:
+    """Classify a raster source as ``lineart`` or ``photo`` by Otsu ink fraction."""
+    gray = load_gray(fetch(src, cache_dir), max_dim)
+    ink_fraction = float(binarize(gray, None).mean())
+    return "lineart" if ink_fraction < _LINEART_INK_FRACTION else "photo"
+
+
 def _kind_for(src: str, kind: str) -> str:
     if kind != "auto":
         return kind
-    return "svg" if src.lower().endswith(".svg") else "raster"
+    if src.lower().endswith(".svg"):
+        return "svg"
+    return detect_kind(src)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -77,6 +134,8 @@ def build_parser() -> argparse.ArgumentParser:
     draw.add_argument("--order", choices=["magnitude", "frequency"], default="magnitude")
     draw.add_argument("--frames", type=int, default=600)
     draw.add_argument("--fps", type=int, default=30)
+    draw.add_argument("--threshold", type=int, default=None)
+    draw.add_argument("--max-dim", dest="max_dim", type=int, default=800)
     draw.add_argument("--json", dest="json_path", default=None)
     draw.add_argument("--out", dest="out_path", default=None)
 
@@ -86,6 +145,8 @@ def build_parser() -> argparse.ArgumentParser:
     info.add_argument("--samples", default="auto")
     info.add_argument("--terms", type=int, default=256)
     info.add_argument("--order", choices=["magnitude", "frequency"], default="magnitude")
+    info.add_argument("--threshold", type=int, default=None)
+    info.add_argument("--max-dim", dest="max_dim", type=int, default=800)
 
     sweep = sub.add_parser(
         "sweep", help="render a grid of reconstructions for several term counts"
@@ -95,20 +156,27 @@ def build_parser() -> argparse.ArgumentParser:
     sweep.add_argument("--samples", default="auto")
     sweep.add_argument("--terms", default="1,4,16,64,256,1024")
     sweep.add_argument("--order", choices=["magnitude", "frequency"], default="magnitude")
+    sweep.add_argument("--threshold", type=int, default=None)
+    sweep.add_argument("--max-dim", dest="max_dim", type=int, default=800)
     sweep.add_argument("--out", dest="out_path", default="grid.png")
     return parser
 
 
-def _require_svg(src: str, kind: str) -> None:
-    if _kind_for(src, kind) != "svg":
-        raise NotImplementedError(
-            "only SVG input is implemented so far; raster/photo arrive in later units"
+def _resolve(args: argparse.Namespace):
+    """Run the pipeline matching the resolved input kind."""
+    kind = _kind_for(args.src, args.kind)
+    if kind == "svg":
+        return run_svg_pipeline(args.src, args.samples, args.terms, args.order)
+    if kind == "lineart":
+        return run_lineart_pipeline(
+            args.src, args.samples, args.terms, args.order,
+            max_dim=args.max_dim, threshold=args.threshold,
         )
+    raise NotImplementedError(f"input kind {kind!r} is not implemented yet")
 
 
 def _cmd_draw(args: argparse.Namespace) -> int:
-    _require_svg(args.src, args.kind)
-    res = run_svg_pipeline(args.src, args.samples, args.terms, args.order)
+    res = _resolve(args)
     rep = error(res.z, res.full, res.kept)
     print(
         f"N={res.n} strokes={res.n_strokes} connector_len={res.connector_len:.6g} "
@@ -124,8 +192,7 @@ def _cmd_draw(args: argparse.Namespace) -> int:
 
 
 def _cmd_info(args: argparse.Namespace) -> int:
-    _require_svg(args.src, args.kind)
-    res = run_svg_pipeline(args.src, args.samples, args.terms, args.order)
+    res = _resolve(args)
     rep = error(res.z, res.full, res.kept)
     print(f"N:                {res.n}")
     print(f"strokes:          {res.n_strokes}")
@@ -138,9 +205,9 @@ def _cmd_info(args: argparse.Namespace) -> int:
 
 
 def _cmd_sweep(args: argparse.Namespace) -> int:
-    _require_svg(args.src, args.kind)
     terms = [int(x) for x in args.terms.split(",") if x.strip()]
-    res = run_svg_pipeline(args.src, args.samples, max(terms), args.order)
+    args.terms = max(terms)  # _resolve selects enough terms to cover the grid
+    res = _resolve(args)
     from epicycles.render.sweep import write_sweep
 
     write_sweep(res.full, terms, args.out_path, args.order)
