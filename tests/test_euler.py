@@ -15,17 +15,20 @@ def _closed_length(strokes):
     )
 
 
-def _square_ring():
-    m = np.zeros((20, 20), dtype=bool)
-    m[5, 5:15] = True
-    m[14, 5:15] = True
-    m[5:15, 5] = True
-    m[5:15, 14] = True
-    return m  # 1px closed loop -> every pixel degree 2 (Eulerian)
+def _diamond_ring():
+    # A 45-degree diamond: diagonal steps turn cleanly (no corner triangles),
+    # so every pixel has exactly degree 2 -> the component is Eulerian.
+    m = np.zeros((24, 24), dtype=bool)
+    for i in range(8):
+        m[3 + i, 11 + i] = True  # top -> right
+        m[11 + i, 19 - i] = True  # right -> bottom
+        m[19 - i, 11 - i] = True  # bottom -> left
+        m[11 - i, 3 + i] = True  # left -> top
+    return m
 
 
 def test_euler_loop_not_longer_than_dfs():
-    m = _square_ring()
+    m = _diamond_ring()
     dfs = skeleton_to_strokes(m)
     eul = skeleton_to_strokes_euler(m)
     assert _closed_length(eul) <= _closed_length(dfs) + 1e-9
@@ -33,7 +36,7 @@ def test_euler_loop_not_longer_than_dfs():
 
 
 def test_euler_visits_each_loop_pixel_once():
-    m = _square_ring()
+    m = _diamond_ring()
     (stroke,) = skeleton_to_strokes_euler(m)
     assert len(stroke) == int(m.sum())  # one point per pixel, no retrace
 

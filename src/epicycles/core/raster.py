@@ -73,6 +73,91 @@ def _neighbour_groups(r: int, c: int, skel: np.ndarray) -> int:
     return sum(1 for i in range(8) if ring[i] and not ring[i - 1])
 
 
+def skeleton_to_strokes_euler(skel: np.ndarray) -> list[np.ndarray]:
+    """Like :func:`skeleton_to_strokes` but avoids retracing where possible.
+
+    For each 8-connected component whose pixel graph is Eulerian (every vertex
+    has even degree — e.g. a closed loop), a Hierholzer Euler circuit traverses
+    each edge exactly once (no out-and-back doubling). Components with
+    odd-degree vertices (trees, T-junctions) fall back to the DFS walk. The
+    total walk length is therefore never longer than the pure DFS walk.
+    """
+    skel = np.asarray(skel, dtype=bool)
+    h = skel.shape[0]
+    labels = label(skel, connectivity=2)
+
+    def to_complex(rc: tuple[int, int]) -> complex:
+        r, c = rc
+        return complex(c + 0.5, h - r - 0.5)
+
+    components = []
+    for lab in range(1, int(labels.max()) + 1):
+        nodes = sorted(zip(*np.where(labels == lab)))
+        if nodes:
+            components.append((nodes[0], lab, nodes))
+    components.sort(key=lambda t: t[0])  # deterministic: by lowest (row,col)
+
+    strokes: list[np.ndarray] = []
+    for _, lab, nodes in components:
+        node_set = set(nodes)
+        if len(nodes) < 2:
+            continue
+        # Build undirected edges (each adjacent pair once) with ids.
+        adj: dict[tuple[int, int], list[tuple[tuple[int, int], int]]] = {
+            n: [] for n in nodes
+        }
+        edge_id = 0
+        for r, c in nodes:
+            for dr, dc in _RING:
+                nb = (r + dr, c + dc)
+                if nb in node_set and (r, c) < nb:
+                    adj[(r, c)].append((nb, edge_id))
+                    adj[nb].append(((r, c), edge_id))
+                    edge_id += 1
+        for n in adj:
+            adj[n].sort()  # deterministic traversal order
+
+        if edge_id > 0 and all(len(adj[n]) % 2 == 0 for n in nodes):
+            circuit = _hierholzer(nodes[0], adj, edge_id)
+            # circuit returns to the start; drop the repeated final point.
+            if len(circuit) >= 2 and circuit[-1] == circuit[0]:
+                circuit = circuit[:-1]
+            if len(circuit) >= 2:
+                strokes.append(
+                    np.array([to_complex(p) for p in circuit], dtype=np.complex128)
+                )
+        else:
+            strokes.extend(skeleton_to_strokes(labels == lab))
+    return strokes
+
+
+def _hierholzer(
+    start: tuple[int, int],
+    adj: dict[tuple[int, int], list[tuple[tuple[int, int], int]]],
+    n_edges: int,
+) -> list[tuple[int, int]]:
+    """Euler circuit of an Eulerian undirected multigraph (iterative)."""
+    cursor = {n: 0 for n in adj}  # next adjacency index to consider per node
+    used = [False] * n_edges
+    stack = [start]
+    circuit: list[tuple[int, int]] = []
+    while stack:
+        v = stack[-1]
+        advanced = False
+        while cursor[v] < len(adj[v]):
+            nb, eid = adj[v][cursor[v]]
+            cursor[v] += 1
+            if not used[eid]:
+                used[eid] = True
+                stack.append(nb)
+                advanced = True
+                break
+        if not advanced:
+            circuit.append(stack.pop())
+    circuit.reverse()
+    return circuit
+
+
 def prune(skel: np.ndarray, min_component_px: int, spur_len: int) -> np.ndarray:
     """Drop small 8-connected components and remove short dead-end branches."""
     skel = np.asarray(skel, dtype=bool).copy()
