@@ -39,7 +39,7 @@ Every arrow left of `render` is a pure function in `core/` except `fetch`/`load`
 |---|---|---|
 | `dft_ref` | `(z) -> Spectrum` | O(N²) reference; tests only |
 | `spectrum` | `(z) -> Spectrum` | `numpy.fft.fft(z)/N`, reindexed to canonical order; matches `dft_ref` to 1e-10·max|z| |
-| `select` | `(spec, m:int, mode:"magnitude"\|"frequency") -> Spectrum` | m terms including k=0. k=0 always first (for m≥1); the remaining m−1 by mode. magnitude: sort by (−\|c\|, \|k\|, k). frequency: sort by (\|k\|, k). Returned in selection order — the drawing order of the chain |
+| `select` | `(spec, m:int, mode:"magnitude"\|"frequency") -> Spectrum` | m terms including k=0. k=0 always first (for m≥1); the remaining m−1 by mode. magnitude: sort by (−\|c\|, \|k\|, k). frequency: sort by (\|k\|, k). Returned in selection order — the drawing order of the chain. Missing k=0 term → `ValueError`; `m<1` → returns just the k=0 term |
 | `evaluate` | `(spec, t: np.ndarray[float]) -> np.ndarray[complex]` | `Σ c e^{2πikt}` for each t |
 | `chain` | `(spec, t: float) -> np.ndarray[complex] (m,)` | partial sums in selection order. `chain[0] = c_0` (anchor), `chain[j]` = centre of circle j+1, `chain[-1] == evaluate(spec,[t])[0]` (pen). Raises `ValueError` unless k=0 is at index 0 (i.e. a `select` result) |
 | `error` | `(z, full:Spectrum, kept:Spectrum) -> ErrorReport` | dataclass `{rms_sampled, rms_parseval, pct_height}` |
@@ -65,7 +65,7 @@ DFS retrace doubles path length but always yields a valid closed walk; that is t
 `fetch(src: str, cache_dir: Path) -> Path` — local path passthrough; URL → `cache_dir/sha256(url)[:16] + ext`, downloaded via `urllib.request` once, with a User-Agent header (Wikimedia rejects requests without one). `ext` from the URL path; if absent, from Content-Type (`image/svg+xml`→`.svg`, `image/png`→`.png`, `image/jpeg`→`.jpg`; anything else raises). No retries.
 
 ### `io/svg.py`
-`load_svg(path, samples_per_unit: float) -> list[Stroke]` — `svgpathtools.Document(path).paths()` (svgpathtools ≥ 1.8; this method replaced `flatten_all_paths`) so group and element `transform`s are applied to the returned path geometry (plain `svg2paths` ignores them, and most web clipart uses them). Basic shapes (circle, rect, line, polyline) are converted to paths. Each `continuous_subpaths()` piece → one Stroke sampled at `max(8, ceil(length·samples_per_unit))` points; y negated. Closed subpaths keep their closing point (dropped later by `join_strokes`).
+`load_svg(path, samples_per_unit: float) -> list[Stroke]` — `svgpathtools.Document(path).paths()` (svgpathtools ≥ 1.8; this method replaced `flatten_all_paths`) so group and element `transform`s are applied to the returned path geometry (plain `svg2paths` ignores them, and most web clipart uses them). Basic shapes (circle, rect, line, polyline) are converted to paths. Each `continuous_subpaths()` piece → one Stroke. Sampling is **scale-invariant**: the total point budget `samples` is split across subpaths in proportion to their arc length, `n_i = max(8, round(samples · len_i / Σlen))`. (An absolute per-unit density would collapse small-viewBox icons — e.g. `0 0 24 24` — to 8-point polygons, losing the curves before the DFT.) Points are taken at `linspace(0,1,n_i)`; y negated. Closed subpaths keep their closing point (dropped later by `join_strokes`).
 
 ### `io/image.py`
 `load_gray(path, max_dim:int) -> uint8 HxW` — Pillow, convert "L", downscale (LANCZOS) so max(H,W) ≤ max_dim.
