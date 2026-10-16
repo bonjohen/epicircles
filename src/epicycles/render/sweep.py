@@ -47,6 +47,10 @@ def write_sweep(
     flat = axes.ravel()
     for ax, (m, z) in zip(flat, traces):
         ax.plot(z.real, z.imag, lw=0.8, color="tab:red")
+        # a degenerate panel (e.g. M=1 is just c_0, a single point) draws nothing
+        # with a line alone; mark it with a dot so the panel isn't blank.
+        if np.ptp(z.real) < 1e-9 and np.ptp(z.imag) < 1e-9:
+            ax.plot(z.real[:1], z.imag[:1], marker="o", ms=4, color="tab:red")
         ax.set_aspect("equal")
         ax.axis("off")
         ax.set_title(f"M={m}")
