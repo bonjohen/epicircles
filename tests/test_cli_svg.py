@@ -64,8 +64,17 @@ def test_ac1b_circle_pipeline_single_harmonic():
     assert np.all(other < 1e-3 * r)
 
 
-def test_ac2_lineart_reconstructs_under_half_percent():
+def test_ac2_synthetic_smoke_under_half_percent():
+    # Synthetic few-harmonic curve: a fast smoke test (converges almost at once).
     res = run_svg_pipeline(str(FIX / "lineart_cc0.svg"), "auto", 512, "magnitude")
+    rep = error(res.z, res.full, res.kept)
+    assert rep.pct_height < 0.5
+
+
+def test_ac2_real_lineart_under_half_percent():
+    # AC-2 proper: a real public-domain multi-stroke web drawing (ethanol_pd.svg).
+    res = run_svg_pipeline(str(FIX / "ethanol_pd.svg"), "auto", 512, "magnitude")
+    assert res.n_strokes >= 2  # genuinely multi-stroke
     rep = error(res.z, res.full, res.kept)
     assert rep.pct_height < 0.5
 

@@ -48,7 +48,8 @@ def write_animation(
     if original is not None:
         ax.plot(original.real, original.imag, lw=0.5, alpha=0.2, color="tab:blue")
 
-    # Minimum drawable radius: 0.5 px converted to data units.
+    # Minimum drawable radius: 0.5 px converted to data units. Approximate —
+    # uses the axes' current px/data width and assumes square-ish scaling.
     fig.canvas.draw()
     px_per_data = ax.get_window_extent().width / (xlim[1] - xlim[0])
     min_radius = 0.5 / px_per_data if px_per_data > 0 else 0.0
