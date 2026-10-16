@@ -7,8 +7,10 @@ centreline. Edge detection and pruning are added in later units.
 from __future__ import annotations
 
 import numpy as np
+from skimage.feature import canny
 from skimage.filters import threshold_otsu
 from skimage.morphology import skeletonize
+from skimage.util import img_as_float
 
 
 def binarize(gray: np.ndarray, threshold: int | None = None) -> np.ndarray:
@@ -22,6 +24,16 @@ def binarize(gray: np.ndarray, threshold: int | None = None) -> np.ndarray:
 def skeleton(mask: np.ndarray) -> np.ndarray:
     """1-pixel-wide skeleton of the ink mask (``skimage.skeletonize``)."""
     return skeletonize(np.asarray(mask, dtype=bool))
+
+
+def edges(gray: np.ndarray, sigma: float, low: float, high: float) -> np.ndarray:
+    """Canny edge mask. Thresholds are absolute gradients on the [0,1] scale.
+
+    The image is converted to float in ``[0, 1]`` (``skimage.util.img_as_float``)
+    so ``low``/``high`` are comparable across uint8/float inputs.
+    """
+    f = img_as_float(np.asarray(gray))
+    return canny(f, sigma=sigma, low_threshold=low, high_threshold=high)
 
 
 # Neighbour offsets in fixed order N, NE, E, SE, S, SW, W, NW (row, col deltas).

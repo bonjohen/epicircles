@@ -36,7 +36,7 @@ Each unit: doc → RED → GREEN → refactor (see CLAUDE.md). Tests listed are 
 - [x] **U13 multi-component + CLI lineart** — two disjoint shapes → 2 strokes → one tour, connector reported; `--kind auto` picks lineart; `--samples auto` picks next power of two ≥ tour length (capped 16384); **AC-3** (coverage + 95 % rule at M=2048).
 
 ## P4 — Photos via edge detection
-- [ ] **U14 edges** — Tests: filled disk image (uint8) → edge ring at radius ±1.5 px with default thresholds (proves the [0,1] conversion); higher sigma → fewer edge pixels on a noisy synthetic (seeded noise).
+- [x] **U14 edges** — Tests: filled disk image (uint8) → edge ring at radius ±1.5 px with default thresholds (proves the [0,1] conversion); higher sigma → fewer edge pixels on a noisy synthetic (seeded noise).
 - [ ] **U15 prune** — Tests: components below `min_component_px` removed; spur of length < `spur_len` removed from a line; main line untouched.
 - [ ] **U16 CLI photo** — `--kind photo` path wired with `--sigma/--low/--high/--min-component/--spur/--max-dim`; auto-detect test on synthetic photo-like image; **AC-4** manual on a real photo, **AC-5** (manual) for raster and photo URLs.
 
