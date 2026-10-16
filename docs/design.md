@@ -97,6 +97,18 @@ python -m epicycles info  SRC        # N, stroke count, connector length, error 
 `--kind auto`: `.svg` → svg; raster → lineart if Otsu ink fraction < 15 %, else photo.
 `--samples auto`: 2048 for svg; next power of two ≥ tour point count, capped at 16384, for rasters.
 
+## Web renderer (`web/`)
+A static page (`web/index.html`, no build step) that animates a coefficient file
+on a `<canvas>`. Serve the folder over HTTP so `fetch` can read the JSON
+(`python -m http.server`). Consumer contracts:
+
+- **`coeffs.json`** — the FR-9 export, schema unchanged: `{N:int, ordering:str, terms:[{k,re,im}]}` (see `io/export.py`). The M slider ranges `1…terms.length`.
+- **`original.json`** (optional sidecar) — places an optional source-image backdrop in the **same drawing coordinates** as the reconstruction: `{x, y, w, h}` where `(x, y)` is the image's **top-left corner in y-up drawing coords** and `w, h` are its width/height in drawing units. The page maps the backdrop by `toPx(x, y)` + `w·scale × h·scale`, so it registers with the trace rather than being fit to the trace bbox. Absent → the backdrop falls back to the trace bounding box.
+- **`original.(png|jpg|svg)`** (optional) — the backdrop image, probed in that order; first that loads is used, drawn at 0.1 alpha under the animation. For a raster source this is the photo; for a vector source it is the drawing rasterized to its stroke bbox (see `web/SOURCES.md`). Missing → no backdrop.
+- **UI toggles:** `circles` (epicycle circles), `target image` (the full-term reconstruction drawn as a faint reference underlay — *not* the literal source, just a dense reconstruction), `original (10%)` (the backdrop image above).
+
+These demo assets are reproducible from `web/SOURCES.md`; they are a convenience renderer, not part of the Python package's tested surface (only the `coeffs.json` schema is covered by `test_browser.py`).
+
 ## Dependencies
 | package | why |
 |---|---|

@@ -60,21 +60,21 @@ const showTarget = document.getElementById("showTarget");
 const showOriginal = document.getElementById("showOriginal");
 const statusEl = document.getElementById("status");
 
-// optional original source image, shown as a faint backdrop (served alongside
-// coeffs.json as original.jpg). Missing file just means no backdrop.
-const bgImg = new Image();
+// optional original source image, shown as a faint backdrop. Probed as
+// original.(png|jpg|svg) in that order; first that loads is used (the loaded
+// probe Image is kept, not reloaded). Missing file just means no backdrop.
+let bgImg = null;
 let bgReady = false;
-bgImg.onload = () => { bgReady = true; };
 [ "original.png", "original.jpg", "original.svg" ].reduce(
   (p, name) => p.catch(() => new Promise((res, rej) => {
     const probe = new Image();
-    probe.onload = () => { bgImg.src = name; res(); };
+    probe.onload = () => { bgImg = probe; bgReady = true; res(); };
     probe.onerror = rej; probe.src = name;
   })), Promise.reject()
 ).catch(() => {});
-// original.json gives the image frame's extent {w, h} in drawing coords
-// (pixel (row,col) -> x=col+0.5, y=H-row-0.5), so the photo registers exactly
-// with the reconstructed edges rather than being fit to the trace bbox.
+// original.json gives the backdrop's frame {x,y,w,h} in drawing coords, with
+// (x,y) the top-left corner (y-up), so the source image registers with the
+// reconstruction rather than being fit to the trace bbox.
 let bgExtent = null;
 fetch("original.json").then(r => r.ok ? r.json() : null).then(j => { bgExtent = j; }).catch(() => {});
 document.getElementById("reset").onclick = () => { trail.length = 0; };
@@ -83,7 +83,7 @@ let spec = null;          // { N, ordering, terms:[{k,re,im}] }
 let view = null;          // {cx, cy, scale} mapping drawing -> canvas
 let t = 0;
 const trail = [];
-let targetPath = [];      // full-term reconstruction = the original drawing (in drawing coords)
+let targetPath = [];      // full-term (all spec.terms) reconstruction, in drawing coords
 
 async function load() {
   try {
@@ -129,8 +129,9 @@ function computeView() {
   view = { scale, ox: (minX + maxX) / 2, oy: (minY + maxY) / 2,
            minX, maxX, minY, maxY };
 
-  // Sample the full reconstruction (all terms) over one period — this closed
-  // curve IS the original drawing; it's shown as a faint reference underlay.
+  // Sample the full reconstruction (all spec.terms) over one period — the
+  // complete N-term curve, shown as a faint reference underlay (not the literal
+  // source image, just the densest reconstruction available).
   targetPath = [];
   const steps = 8000;
   for (let i = 0; i <= steps; i++) targetPath.push(evalAt(i / steps));
@@ -147,9 +148,9 @@ function frame() {
   termsVal.textContent = String(m);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // original source photo as a faint 10% backdrop. Map it to its true pixel
-  // frame [0,w]x[0,h] in drawing coords (from original.json) so it registers
-  // with the reconstructed edges; fall back to the trace bbox if absent.
+  // original source image as a faint 10% backdrop (photo, or a vector drawing
+  // rasterized to its stroke bbox). Map it to its drawing-coord frame from
+  // original.json so it registers with the trace; fall back to trace bbox.
   if (showOriginal.checked && bgReady) {
     let x0, y0, dw, dh;
     if (bgExtent) {
