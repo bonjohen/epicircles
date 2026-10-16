@@ -68,3 +68,23 @@ def test_ac2_lineart_reconstructs_under_half_percent():
     res = run_svg_pipeline(str(FIX / "lineart_cc0.svg"), "auto", 512, "magnitude")
     rep = error(res.z, res.full, res.kept)
     assert rep.pct_height < 0.5
+
+
+def _scaled_svg(tmp_path, s):
+    d = "M0,0 L3,1 L1,4 L5,5 L2,7 L0,3"
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">'
+        f'<g transform="scale({s})"><path d="{d}"/></g></svg>'
+    )
+    p = tmp_path / f"scaled_{s}.svg"
+    p.write_text(svg)
+    return p
+
+
+def test_sampling_is_scale_invariant(tmp_path):
+    # F2.2: the same drawing at x0.01 and x100 gives the same %-error.
+    errs = {}
+    for s in (0.01, 100.0):
+        res = run_svg_pipeline(str(_scaled_svg(tmp_path, s)), 512, 64, "magnitude")
+        errs[s] = error(res.z, res.full, res.kept).pct_height
+    assert abs(errs[0.01] - errs[100.0]) < 1e-6

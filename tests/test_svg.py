@@ -4,7 +4,6 @@ Contract in docs/design.md#io/svg.py: Document.paths() with transforms applied;
 each continuous subpath -> one Stroke sampled at max(8, ceil(length*spu))
 points; y negated (y_up = -y_svg); closed subpaths keep their closing point.
 """
-import math
 from pathlib import Path
 
 import numpy as np
@@ -47,16 +46,16 @@ def test_two_strokes_count():
     assert len(load_svg(FIX / "two_strokes.svg", 1.0)) == 2
 
 
-def test_sample_count_rule():
-    # two_strokes segment length = 10. spu=2.0 -> ceil(20)=20 points.
-    s0, _ = load_svg(FIX / "two_strokes.svg", 2.0)
-    assert len(s0) == 20
-    # tiny spu floors to the minimum of 8.
-    s0_min, _ = load_svg(FIX / "two_strokes.svg", 0.01)
+def test_sample_count_budget_split():
+    # two_strokes: 2 equal subpaths (len 10, total 20). budget 40 -> 20 each.
+    s0, s1 = load_svg(FIX / "two_strokes.svg", 40)
+    assert len(s0) == 20 and len(s1) == 20
+    # tiny budget floors to the minimum of 8 per subpath.
+    s0_min, _ = load_svg(FIX / "two_strokes.svg", 4)
     assert len(s0_min) == 8
-    # circle: length 2*pi*30, spu=1.0 -> ceil(188.4956)=189.
-    (c,) = load_svg(FIX / "circle.svg", 1.0)
-    assert len(c) == max(8, math.ceil(2 * math.pi * 30 * 1.0))
+    # single subpath gets the whole budget.
+    (c,) = load_svg(FIX / "circle.svg", 200)
+    assert len(c) == 200
 
 
 def test_closed_subpath_keeps_closing_point():

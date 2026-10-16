@@ -43,14 +43,15 @@ def run_svg_pipeline(
     samples: str | int,
     terms: int,
     order: str,
-    samples_per_unit: float = 1.0,
     cache_dir: Path = _DEFAULT_CACHE,
 ) -> SvgResult:
     """Run the SVG path of the pipeline and return the specs and metadata."""
     path = fetch(src, cache_dir)
-    strokes = load_svg(path, samples_per_unit)
-    tour, connector_len = join_strokes(strokes)
     n = _SVG_SAMPLES if samples == "auto" else int(samples)
+    # Oversample subpaths (budget 4N) before arc-length resampling to N so fine
+    # curves survive; the budget is split by length, making sampling scale-free.
+    strokes = load_svg(path, 4 * n)
+    tour, connector_len = join_strokes(strokes)
     z = resample(tour, n)
     full = spectrum(z)
     kept = select(full, terms, order)
