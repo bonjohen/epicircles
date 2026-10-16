@@ -10,7 +10,8 @@ contiguous. See docs/design.md#core/fourier.py.
 """
 from __future__ import annotations
 
-from typing import NamedTuple
+from dataclasses import dataclass
+from typing import Literal, NamedTuple
 
 import numpy as np
 
@@ -85,3 +86,62 @@ def chain(spec: Spectrum, t: float) -> np.ndarray:
         raise ValueError("chain requires the k=0 term at index 0 (a select result)")
     terms = spec.c * np.exp(2j * np.pi * spec.k * float(t))
     return np.cumsum(terms)
+
+
+def select(spec: Spectrum, m: int, mode: Literal["magnitude", "frequency"]) -> Spectrum:
+    """Keep ``m`` terms including ``k=0``, returned in drawing order.
+
+    ``k=0`` is always first (for ``m >= 1``). The remaining ``m-1`` terms are
+    chosen and ordered by ``mode``:
+
+    * ``magnitude`` — by ``(-|c|, |k|, k)``: largest magnitude first, ties
+      broken by frequency distance then signed frequency.
+    * ``frequency`` — by ``(|k|, k)``: lowest frequencies first.
+    """
+    zero = np.where(spec.k == 0)[0]
+    if zero.size == 0:
+        raise ValueError("select requires a k=0 term in the spectrum")
+    rest = np.where(spec.k != 0)[0]
+    kr = spec.k[rest]
+    if mode == "magnitude":
+        order = np.lexsort((kr, np.abs(kr), -np.abs(spec.c[rest])))
+    elif mode == "frequency":
+        order = np.lexsort((kr, np.abs(kr)))
+    else:
+        raise ValueError(f"unknown mode {mode!r}")
+    take = max(int(m) - 1, 0)
+    chosen = rest[order][:take]
+    idx = np.concatenate(([zero[0]], chosen))
+    return Spectrum(spec.k[idx], spec.c[idx])
+
+
+@dataclass
+class ErrorReport:
+    """Reconstruction error of a kept term set against the samples."""
+
+    rms_sampled: float
+    rms_parseval: float
+    pct_height: float
+
+
+def error(z: np.ndarray, full: Spectrum, kept: Spectrum) -> ErrorReport:
+    """Reconstruction error of ``kept`` terms over the samples ``z``.
+
+    ``rms_sampled`` is the RMS pointwise distance at ``t=n/N``; ``rms_parseval``
+    is ``sqrt(Σ_{k∉kept} |c_k|²)`` (dropped energy). The two agree up to float
+    error. ``pct_height`` is ``100·rms_sampled / max(width, height)`` of the
+    sample bounding box; a zero-size bounding box raises :class:`ValueError`.
+    """
+    z = np.asarray(z, dtype=np.complex128)
+    n = z.shape[0]
+    t = np.arange(n) / n
+    rms_sampled = float(np.sqrt(np.mean(np.abs(z - evaluate(kept, t)) ** 2)))
+
+    dropped = ~np.isin(full.k, kept.k)
+    rms_parseval = float(np.sqrt(np.sum(np.abs(full.c[dropped]) ** 2)))
+
+    scale = max(float(np.ptp(z.real)), float(np.ptp(z.imag)))
+    if scale == 0.0:
+        raise ValueError("degenerate (zero-size) bounding box; percent undefined")
+    pct_height = 100.0 * rms_sampled / scale
+    return ErrorReport(rms_sampled, rms_parseval, pct_height)
