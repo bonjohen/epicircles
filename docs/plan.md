@@ -8,7 +8,7 @@ Each unit: doc → RED → GREEN → refactor (see CLAUDE.md). Tests listed are 
   Tests: `test_cli_help_exits_zero`.
 
 ## P1 — Math core (synthetic data only)
-- [ ] **U1 spectrum** — `dft_ref`, `spectrum`.
+- [x] **U1 spectrum** — `dft_ref`, `spectrum`.
   Tests: circle `a + r·e^{2πin/N}` → c_0 = a, only other term k=1 with |c|=r (**AC-1a**); clockwise circle → k=−1; constant → only k=0; `spectrum` ≈ `dft_ref` (hypothesis, random z, N∈[4,256]); canonical k order and range for even and odd N; translation by `a` changes only `c_0` by `a`.
 - [ ] **U2 evaluate/chain** — `evaluate`, `chain`.
   Tests: full spectrum reproduces samples at `t=n/N` (1e-9); `chain` length m, `chain[0]==c_0`, `chain[-1]==evaluate`; `chain` raises if k=0 is not first; ellipse from k=±1 traces correct semi-axes.
