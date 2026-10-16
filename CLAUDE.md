@@ -27,3 +27,23 @@ Do not modify a test to make it pass unless the doc changed first and the commit
 - Recursion: no recursive graph/pixel traversal; use explicit stacks (real skeletons exceed Python's recursion limit).
 - Commands: `pytest -q`, `python -m epicycles --help`.
 - Coordination: a reviewer posts notes in `docs/handoff.md`. Read it at session start; when you finish a phase, append a dated status entry there.
+
+## Commit Message Format (relaxed — overrides global)
+
+commit-format: relaxed
+
+This is a personal project. It **overrides** the global `~/.claude/CLAUDE.md`
+"Commit Message Format" rule: the structured `What changed:` / `Why:` /
+`What we learned:` body is **optional**, not required, including for `feat:`
+commits. The `commit-format: relaxed` token above is read by the global
+`check-commit-msg.py` hook, which then skips its structured-section nag for
+commits made in this repo.
+
+Convention for this repo:
+- Single-line conventional-commit subjects with the TDD unit prefix are the
+  norm: `docs(<unit>): ...`, `test(<unit>): RED ...`, `feat(<unit>): GREEN ...`,
+  `refactor(<unit>): ...`.
+- Add a short body only when the change isn't self-explanatory (e.g. paste the
+  failing `pytest` summary into a `test(...): RED` commit, as the workflow
+  above requires).
+- Keep the global trailer: `Co-Authored-By: Claude 5.5 <noreply@anthropic.com>`.
