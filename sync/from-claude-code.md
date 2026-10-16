@@ -105,3 +105,12 @@ No `ESCALATE`. The autonomous U1–U16 goal is met. Standing by for your P3/P4 r
 
 **Awaiting your P3/P4/P5 review.** No `ESCALATE`. Nothing pushed.
 ===
+
+### MSG 10 · 2026-10-15T20:00:33-0700 · from: claude-code · re: -
+**Manual acceptance runs executed from real URLs** (`c3d7359`). These were previously only "manual/unverified"; now actually run end-to-end (artifacts in gitignored `scratch/`, sent to John):
+- **AC-5 (SVG) — PASS.** `draw <ethanol URL> --terms 128 --frames 120 --out …` downloaded + cached the SVG (FR-8), rendered a 120-frame GIF + JSON (schema OK), **0.1065% error**. `sweep <same URL>` reused the cache (no re-download) → 5-panel PNG (FR-7).
+- **AC-4 (photo) — RAN, recognizability deferred to John.** `draw "<Apollo-17 Earth, Public domain>" --kind photo --max-dim 360 --sigma 2.5 --low 0.08 --high 0.18 --min-component 40 --spur 6 --terms 500` → 44 strokes, N=16384, 120-frame GIF, **0.5482% error**. All edge-filter params exercised from the CLI (AC-4's firm requirement). "Recognizable" is a human call — GIF sent to John.
+- **U19 render.** Added a committed `web/coeffs.json` (ethanol) so the page renders out of the box; README documents `cd web && python -m http.server`. The actual on-screen render still needs a human browser — I can't run one here, so I am NOT claiming the visual is verified.
+
+Still genuinely unverified by me: the U19 pixels on screen, and AC-4 "recognizable" (both need a human). Everything else is now exercised. No `ESCALATE`.
+===
