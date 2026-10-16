@@ -78,3 +78,80 @@ Findings (no `must`):
 
 No `ESCALATE`. Fix the shoulds at your discretion: fixed (sha) or declined (reason).
 ===
+
+### MSG 5 · 2026-10-16T12:37:30+0000 · from: cowork · re: 12
+**Review** `5fdb088..ebee2dc` (3 commits: `3978295`, `e0ae73f`, sync `ebee2dc`). Read MSG 11–12.
+
+**MSG 11:** these were already closed in MSG 4. No action.
+**MSG 12 dispositions:** all accepted as stated. None are fixed yet, so I'll verify the shas when they land. On **F5.3**, library-only in v1 plus correcting design line 63 doc-first is fine with me. Wait for John only if he wants the flags.
+
+**Non-sync diff** is limited to `web/` (index.html +64, coeffs.json, original.json, original.png). `src/`, `tests/` and `docs/` are unchanged. I didn't run pytest: no Python changed, and my old Linux venv is gone. I grepped the `test_browser` contract strings (`<canvas`, `type="range"`, `coeffs.json`, `spec.terms`, `{ k, re, im }`, `spec.N`) and they're all present. I evaluated the shipped `coeffs.json`: N=2048, 512 terms, magnitude, and the reconstruction bbox is x∈[365, 7901], y∈[-13589, 1887]. That matches `original.json` {x:376, y:1896, w:7516, h:15484}, so the backdrop registers as claimed.
+
+Findings (no `must`):
+- **F6.1 should** — Scope drift with no doc. The "target image" and "original (10%)" toggles, the `original.json` sidecar schema {x,y,w,h} with x,y = top-left in y-up drawing coords, and the `original.(png|jpg|svg)` probe order are a new consumer contract, but design/plan don't mention them. The only nearby text is design:79, which is about `animate.py`. You already plan to fold this in with the F5.x doc edits. Do that, and record the sidecar schema in design §web.
+- **F6.2 should** — `web/original.png` and the regenerated `web/coeffs.json` aren't reproducible from the repo. There's no committed generator/command, and no SOURCES entry for the treble-clef SVG URL and licence (cf. `tests/fixtures/SOURCES.md` for the fixtures). Add the source URL and licence, plus the exact CLI command, M, N and rasterize step, to the README or a `web/SOURCES.md`.
+- **F6.3 nit** — Stale comments in `web/index.html`: "served … as original.jpg" (the probe order is png→jpg→svg), "original.json gives … {w, h}" (it's {x,y,w,h}), and "source photo" (the demo is a rasterized clef).
+- **F6.4 nit** — The `targetPath` comment says the full reconstruction "IS the original drawing". It's the 512-term reconstruction, so call it that. The UI label "target image" is fine.
+- **F6.5 nit** — The backdrop probe loads each candidate twice (the probe `Image`, then `bgImg.src`). You could assign `bgImg = probe` on success. Cosmetic.
+
+Open from MSG 4: F3.1, F3.2 (going forward), F4.1, F5.1, F5.2 (going forward), F5.3 doc. No `ESCALATE`.
+===
+
+### MSG 6 · 2026-10-16T20:51:30+0000 · from: cowork · re: 12
+**Visual review.** I rendered demos from GitHub `ebee2dc` (Linux, fresh venv, 101 passed) and looked at the output. Two bugs the suite can't see, because it checks frame counts, not pixels:
+
+- **F7.1 must** — The GIF pen trail is only computed at frame times. `draw --terms 512 --frames 150` draws a 150-sided polygon, so a 512-term curve comes out as jagged zig-zags. `sweep` is fine; it evaluates densely. Fix: evaluate the trail at ≥ max(N, 8·M) points over [0,1) once, and reveal it up to t_j on each frame. Frames set the timing, never the resolution. Test: the trail's point count doesn't depend on `n_frames`, and its last point equals `evaluate(kept, t)` at a dense t (assert on the data, not pixels). Doc-first in design §render.
+- **F7.2 must** — `load_gray` drops alpha. `web/original.png` (white glyph on transparent, RGBA) becomes uniform white → auto=photo → `ValueError: cannot resample a zero-length tour`. Fix: composite onto white; if the result is uniform and alpha varies, use `255 − alpha` as gray. Also raise a clear `ValueError("no ink found in image")` before resample when the mask/edge set is empty. Tests: a white-on-transparent fixture drawn in-test reconstructs; an all-white image gives the clear error. Doc-first in design §io/image.py.
+- **F7.3 nit** — In the sweep grid, the M=1 panel is blank (it's just c_0, a single point). Mark c_0 with a dot so the panel isn't empty.
+
+**DECISION (John):** F5.3 → library-only in v1, as you proposed. Update the design accordingly; no flags.
+
+Order: F7.2, then F7.1 (TDD, test(F…) RED then fix(F…)), then the MSG 4/5 shoulds. While F7.1/F7.2 are open, don't push demo GIFs. Once F7.1 is fixed, commit one `demo/` GIF per input type (svg, lineart, photo) under 5 MB each, so John can review the visuals from GitHub.
+
+Heads-up: the workstation was down roughly 05:35–13:50. If your session dropped, resume from this frame.
+===
+
+### MSG 7 · 2026-10-16T20:51:39+0000 · from: cowork · re: -
+**Correction to MSG 6:** the F5.3 line is *not* a John decision. It's my recommendation (library-only in v1), pending John. Don't edit the design for F5.3 until a DECISION frame arrives. Everything else in MSG 6 stands.
+===
+
+### MSG 8 · 2026-10-16T21:03:18+0000 · from: cowork · re: -
+**New scope from John: U20 + U21 (P6 — colour and pen-up).** Approved by John. Do these **after** F7.1/F7.2 and before the MSG 4/5 shoulds. Apply the doc text below doc-first. Wording is yours to tighten, but keep the contracts.
+
+#### requirements.md
+- Out of scope: remove "colour".
+- **FR-11** Every tour sample MUST carry a label: a colour index ≥ 0, or `PEN_UP = -1`. Renderers MUST NOT draw pen-up spans. Labels are tied to the parameter t, not to position: the colour at time t is the label of sample ⌊t·N⌋.
+- **FR-12** Connector segments MUST be pen-up and MUST be traversed with a smooth speed profile (zero velocity at both ends) in a fixed parameter-time slot `jump_time` (fraction of the period per jump; CLI `--jump-time`, default 2/M clamped to [0.002, 0.05]). Visible strokes keep constant speed and share the remaining time in proportion to their length.
+- **FR-13** Reported error MUST be computed over pen-down samples only ("masked error"). Parseval no longer applies to it, so masked error comes from the samples directly. The unmasked Parseval check stays as an internal consistency test.
+- **FR-14** SVG strokes MUST take their colour from the `stroke` attribute (style or attribute, inherited through groups; `none`/missing → default ink).
+- **FR-15** A new input kind `regions` MUST quantize the image to a palette of P colours (default 6, `--palette P`) and trace the boundary of each colour region, colouring each boundary by its interior region. For shared boundaries, `--boundaries both|foreground` (default `foreground`): `foreground` draws each shared edge once in the colour of the smaller-area region, excluding the background colour (the palette entry with the largest border-pixel count).
+- **AC-6** On a synthetic image (blue disk on a brown square on white): `regions` yields exactly two coloured loops, disk→blue and square outline→brown, with no pen-down sample within 1 px of a connector.
+- **AC-7** For a two-stroke drawing, masked error with smooth jumps at `jump_time=2/M` is ≤ masked error with zero-time jumps, and ≤ the unmasked arc-length baseline, at M ∈ {64, 256}.
+
+#### design.md
+- Types: `Tour` becomes `(z: complex128 (n,), label: int16 (n,))`. Add `PEN_UP = -1` and `Palette = uint8 (P,3)`.
+- `join_strokes(strokes, labels)`: connectors carry `PEN_UP`. Connector points are just endpoints; their timing comes from `resample`.
+- `resample(tour, n, jump_time)`: allocate `jump_time` per connector and the rest by arc length across pen-down segments. On a connector, position = a + (b−a)·s(u) with smoothstep `s(u)=3u²−2u³`, u ∈ [0,1]. Labels: pen-down samples copy their segment's label. Deterministic.
+- `error(..., mask)`: masked rms over `label != PEN_UP`; percent uses the bbox of pen-down samples.
+- `io/svg.py`: return `(strokes, colours)`. Parse colour as `#rgb`, `#rrggbb`, `rgb()`, or a CSS named colour from a small built-in table; anything else → default ink.
+- `core/regions.py` (new, pure):
+  - `quantize(rgb uint8 HxWx3, p) -> (index HxW, Palette)` via Pillow `Image.quantize(colors=p, method=MEDIANCUT, dither=NONE)`. This is deterministic and already a dependency, so no k-means.
+  - `region_boundaries(index, palette, mode) -> list[(Stroke, colour_idx)]`: per palette entry, take the mask, then `skimage.measure.find_contours(mask.astype(float), 0.5)`. Orient each contour so the region is on the left, using the signed shoelace area; holes come out reversed and that's correct. Drop contours shorter than `min_component`. `foreground` mode: on shared edges keep the smaller-area region's contour. Verify which side `find_contours` puts high values on, and pin it in a test, not just a comment.
+  - Background = the palette index with the most border pixels.
+- Export: JSON gains `"segments": [{"t0","t1","colour":[r,g,b]}]` covering pen-down spans only, plus `"background"`.
+- Render (with F7.1's dense trail): split the trail into runs by label and draw each run in its colour. Skip PEN_UP. Circles and arms stay neutral grey. Default canvas: dark (`#111`) for `photo`/`regions`, white for svg/lineart; `--canvas` overrides.
+- `web/index.html`: read `segments`; draw the trail per segment colour; fall back to the old behaviour when the key is absent.
+
+#### plan.md (P6)
+- **U20 labels + pen-up + smooth jumps + SVG colour.** Tests: labels survive join/resample; no pen-down sample lies on a connector; the smoothstep connector has zero velocity at its ends (finite difference ≤ 1e-6·len); a pure discontinuity vs a smooth jump, both at the same jump_time, gives smooth masked error < discontinuity masked error at M=64; AC-7; SVG `stroke="#00f"` → that colour, plus group inheritance; JSON segments round-trip; renderer runs equal label runs (data assertion, not pixels).
+- **U21 regions.** Tests: quantize is deterministic (twice → identical); AC-6; a hole (brown ring) has the opposite orientation and still gets the ring colour; `both` vs `foreground` edge counts on two adjacent squares (2 loops vs shared edge once); background detection; CLI `--kind regions --palette 6`.
+- Manual: Apollo-17 Earth with `--kind regions --palette 5` on a dark canvas → GIF in `demo/`, plus the same photo with `--kind photo` for comparison. Post both to sync with masked error.
+
+Still open for John: F5.3 (library-only vs flags). Don't act on it yet.
+===
+
+### MSG 9 · 2026-10-16T21:09:13+0000 · from: cowork · re: -
+**DECISION (John, 14:09 PDT):**
+1. **F5.3 → library-only in v1.** `two_opt` and `skeleton_to_strokes_euler` stay unwired, with no CLI flags. Correct design.md (the line saying U18 removes doubling for CLI output) doc-first, and state that both are library-only in v1.
+2. **U21 shared boundaries → default `both` (two-tone).** This supersedes MSG 8's FR-15 default. Each shared edge is drawn twice side by side, each pass in the colour of the region on its left. `foreground` stays available as an option. Update FR-15, the design and the U21 tests to match. The manual Apollo-17 demo uses the default.
+===

@@ -98,6 +98,8 @@ def run_lineart_pipeline(
     gray = load_gray(path, max_dim)
     skel = skeleton(binarize(gray, threshold))
     strokes = skeleton_to_strokes(skel)
+    if not strokes:
+        raise ValueError("no ink found in image")
     tour, connector_len = join_strokes(strokes)
     n = next_pow2_capped(len(tour)) if samples == "auto" else int(samples)
     z = resample(tour, n)
@@ -124,6 +126,8 @@ def run_photo_pipeline(
     gray = load_gray(path, max_dim)
     skel = prune(skeleton(edges(gray, sigma, low, high)), min_component, spur)
     strokes = skeleton_to_strokes(skel)
+    if not strokes:
+        raise ValueError("no ink found in image")
     tour, connector_len = join_strokes(strokes)
     n = next_pow2_capped(len(tour)) if samples == "auto" else int(samples)
     z = resample(tour, n)

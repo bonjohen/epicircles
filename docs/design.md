@@ -54,7 +54,7 @@ Every arrow left of `render` is a pure function in `core/` except `fetch`/`load`
 ### `core/raster.py`
 | fn | signature | contract |
 |---|---|---|
-| `binarize` | `(gray: uint8 HxW, threshold:int\|None) -> bool HxW` | True = ink = `gray <= threshold`. None → Otsu. skimage's Otsu splits foreground as `> threshold`, so ink (dark) is the `<=` side; this also handles a purely bimodal image, where Otsu returns the low class value |
+| `binarize` | `(gray: uint8 HxW, threshold:int\|None) -> bool HxW` | True = ink = `gray <= threshold`. None → Otsu. skimage's Otsu splits foreground as `> threshold`, so ink (dark) is the `<=` side; this also handles a purely bimodal image, where Otsu returns the low class value. A **uniform** image (`min==max`) has no foreground to separate, so None-threshold returns an all-`False` (no-ink) mask instead of Otsu's degenerate "all ink" |
 | `edges` | `(gray, sigma, low, high) -> bool HxW` | converts to float in [0,1] (`skimage.util.img_as_float`), then `skimage.feature.canny(sigma, low_threshold=low, high_threshold=high)`. Thresholds are absolute gradient values on that [0,1] scale |
 | `skeleton` | `(mask) -> bool HxW` | `skimage.morphology.skeletonize` |
 | `prune` | `(skel, min_component_px:int, spur_len:int) -> bool HxW` | drop small 8-connected components; remove end-branches shorter than spur_len |

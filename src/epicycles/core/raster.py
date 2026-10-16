@@ -18,9 +18,16 @@ _DEG_KERNEL = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
 
 
 def binarize(gray: np.ndarray, threshold: int | None = None) -> np.ndarray:
-    """Boolean ink mask: ``True`` where darker than ``threshold`` (Otsu if None)."""
+    """Boolean ink mask: ``True`` where darker than ``threshold`` (Otsu if None).
+
+    A uniform image (``min == max``) has no foreground to separate — Otsu is
+    undefined there — so the mask is all-``False`` (no ink) rather than Otsu's
+    degenerate "everything is ink". An explicit ``threshold`` is still applied.
+    """
     gray = np.asarray(gray)
     if threshold is None:
+        if gray.min() == gray.max():
+            return np.zeros(gray.shape, dtype=bool)
         threshold = threshold_otsu(gray)
     return gray <= threshold
 
