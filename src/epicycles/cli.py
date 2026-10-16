@@ -14,7 +14,13 @@ import numpy as np
 
 from epicycles.core.fourier import Spectrum, error, select, spectrum
 from epicycles.core.path import resample
-from epicycles.core.raster import binarize, skeleton, skeleton_to_strokes
+from epicycles.core.raster import (
+    binarize,
+    edges,
+    prune,
+    skeleton,
+    skeleton_to_strokes,
+)
 from epicycles.core.tour import join_strokes
 from epicycles.io.export import to_json
 from epicycles.io.fetch import fetch
@@ -100,6 +106,32 @@ def run_lineart_pipeline(
     return RasterResult(z, full, kept, len(strokes), connector_len, n, order, skel)
 
 
+def run_photo_pipeline(
+    src: str,
+    samples: str | int,
+    terms: int,
+    order: str,
+    sigma: float = 2.0,
+    low: float = 0.1,
+    high: float = 0.2,
+    min_component: int = 20,
+    spur: int = 5,
+    max_dim: int = 800,
+    cache_dir: Path = _DEFAULT_CACHE,
+) -> RasterResult:
+    """Run the photo path: Canny edges -> skeleton -> prune -> strokes -> DFT."""
+    path = fetch(src, cache_dir)
+    gray = load_gray(path, max_dim)
+    skel = prune(skeleton(edges(gray, sigma, low, high)), min_component, spur)
+    strokes = skeleton_to_strokes(skel)
+    tour, connector_len = join_strokes(strokes)
+    n = next_pow2_capped(len(tour)) if samples == "auto" else int(samples)
+    z = resample(tour, n)
+    full = spectrum(z)
+    kept = select(full, terms, order)
+    return RasterResult(z, full, kept, len(strokes), connector_len, n, order, skel)
+
+
 def detect_kind(
     src: str, max_dim: int = 800, cache_dir: Path = _DEFAULT_CACHE
 ) -> str:
@@ -137,6 +169,11 @@ def build_parser() -> argparse.ArgumentParser:
     draw.add_argument("--fps", type=int, default=30)
     draw.add_argument("--threshold", type=int, default=None)
     draw.add_argument("--max-dim", dest="max_dim", type=int, default=800)
+    draw.add_argument("--sigma", type=float, default=2.0)
+    draw.add_argument("--low", type=float, default=0.1)
+    draw.add_argument("--high", type=float, default=0.2)
+    draw.add_argument("--min-component", dest="min_component", type=int, default=20)
+    draw.add_argument("--spur", type=int, default=5)
     draw.add_argument("--json", dest="json_path", default=None)
     draw.add_argument("--out", dest="out_path", default=None)
 
@@ -148,6 +185,11 @@ def build_parser() -> argparse.ArgumentParser:
     info.add_argument("--order", choices=["magnitude", "frequency"], default="magnitude")
     info.add_argument("--threshold", type=int, default=None)
     info.add_argument("--max-dim", dest="max_dim", type=int, default=800)
+    info.add_argument("--sigma", type=float, default=2.0)
+    info.add_argument("--low", type=float, default=0.1)
+    info.add_argument("--high", type=float, default=0.2)
+    info.add_argument("--min-component", dest="min_component", type=int, default=20)
+    info.add_argument("--spur", type=int, default=5)
 
     sweep = sub.add_parser(
         "sweep", help="render a grid of reconstructions for several term counts"
@@ -159,6 +201,11 @@ def build_parser() -> argparse.ArgumentParser:
     sweep.add_argument("--order", choices=["magnitude", "frequency"], default="magnitude")
     sweep.add_argument("--threshold", type=int, default=None)
     sweep.add_argument("--max-dim", dest="max_dim", type=int, default=800)
+    sweep.add_argument("--sigma", type=float, default=2.0)
+    sweep.add_argument("--low", type=float, default=0.1)
+    sweep.add_argument("--high", type=float, default=0.2)
+    sweep.add_argument("--min-component", dest="min_component", type=int, default=20)
+    sweep.add_argument("--spur", type=int, default=5)
     sweep.add_argument("--out", dest="out_path", default="grid.png")
     return parser
 
@@ -172,6 +219,12 @@ def _resolve(args: argparse.Namespace):
         return run_lineart_pipeline(
             args.src, args.samples, args.terms, args.order,
             max_dim=args.max_dim, threshold=args.threshold,
+        )
+    if kind == "photo":
+        return run_photo_pipeline(
+            args.src, args.samples, args.terms, args.order,
+            sigma=args.sigma, low=args.low, high=args.high,
+            min_component=args.min_component, spur=args.spur, max_dim=args.max_dim,
         )
     raise NotImplementedError(f"input kind {kind!r} is not implemented yet")
 

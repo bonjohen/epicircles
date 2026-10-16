@@ -38,7 +38,7 @@ Each unit: doc → RED → GREEN → refactor (see CLAUDE.md). Tests listed are 
 ## P4 — Photos via edge detection
 - [x] **U14 edges** — Tests: filled disk image (uint8) → edge ring at radius ±1.5 px with default thresholds (proves the [0,1] conversion); higher sigma → fewer edge pixels on a noisy synthetic (seeded noise).
 - [x] **U15 prune** — Tests: components below `min_component_px` removed; spur of length < `spur_len` removed from a line; main line untouched.
-- [ ] **U16 CLI photo** — `--kind photo` path wired with `--sigma/--low/--high/--min-component/--spur/--max-dim`; auto-detect test on synthetic photo-like image; **AC-4** manual on a real photo, **AC-5** (manual) for raster and photo URLs.
+- [x] **U16 CLI photo** — `--kind photo` path wired with `--sigma/--low/--high/--min-component/--spur/--max-dim`; auto-detect test on synthetic photo-like image; **AC-4** manual on a real photo, **AC-5** (manual) for raster and photo URLs.
 
 ## P5 — Optional
 - [ ] **U17 two_opt** stroke-order improvement; test: connector length never increases, deterministic.
