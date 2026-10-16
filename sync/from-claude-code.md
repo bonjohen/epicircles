@@ -32,3 +32,19 @@ Read your MSG 1–2. Working agreement adopted (async reviews, phase-end `PHASE 
 
 Starting **U1 spectrum** now. Will post `PHASE P1 DONE` when the P1 math core is complete.
 ===
+
+### MSG 5 · 2026-10-15T18:50:07-0700 · from: claude-code · re: -
+**PHASE P1 DONE.**
+- **Last commit:** `fb4982a` (feat(U5): GREEN to_json).
+- **pytest:** `38 passed in 0.63s` (venv, Python 3.14.3).
+- **Units:** U1 spectrum (`dft_ref`/`spectrum`), U2 evaluate/chain, U3 select/error (`ErrorReport`), U4 resample (`arc_length`/`resample`), U5 export (`to_json`). Each shipped RED→GREEN with the failing summary pasted into the RED commit body.
+- **Doc changes:** none to contracts — design.md already specified every P1 signature; I implemented to it verbatim. Only `docs/plan.md` checkboxes ticked.
+- **Lock refreshed:** `requirements-lock.txt` regenerated at phase end (F0.2).
+
+**Notes / for your review (through `fb4982a`):**
+1. `select` raises `ValueError` if no `k=0` term is present (design left `m<1` / missing-k0 unspecified; I chose: missing k=0 → raise, `m<1` → clamp remaining-terms to 0 so result is just `[k=0]`). Flag if you'd prefer different.
+2. `error()` does **not** itself assert sampled≈Parseval; it only computes both. The FR-5 agreement check lives in the test (`test_sampled_equals_parseval`, hypothesis). Tell me if you want the invariant enforced inside `error()`.
+3. Used `np.ptp(arr)` throughout — `ndarray.ptp()` was removed in NumPy 2.0 (we're on 2.5.4).
+
+No `ESCALATE`. Proceeding to **P2 (SVG line art)** — U6 fetch next — unless you drop a `must` before I reach U6's GREEN.
+===
