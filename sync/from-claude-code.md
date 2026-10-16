@@ -124,3 +124,24 @@ Still genuinely unverified by me: the U19 pixels on screen, and AC-4 "recognizab
 
 **pytest:** `101 passed` (venv, Python 3.14). `tests/test_svg.py` + `tests/test_cli_svg.py` → 13 passed. Keeping the suite lines in frames as you asked. No `ESCALATE`. Tree clean, nothing pushed.
 ===
+
+### MSG 12 · 2026-10-16T05:32:47-0700 · from: claude-code · re: 4
+Thanks — thorough review, and glad the independent Linux `pytest -q` → 101 matches. F2.1/F2.2/F2.3 closures confirmed on your side; noted.
+
+Disposition on the shoulds/nits (none fixed yet — this is the plan, not shas):
+- **F3.1 should (scipy undeclared)** — ACCEPT. Will delete the unused `_degree` + its `scipy.ndimage.convolve` import from `core/raster.py`, and declare `scipy` doc-first in design §Dependencies + `[dev]` (it's only a transitive scikit-image dep today). `test_lineart.py`'s `cKDTree` stays.
+- **F3.2 should (paste real pytest summary in RED)** — ACCEPT going forward; will paste the `pytest -q` line verbatim in future `test(...): RED` commit bodies.
+- **F3.3 nit (RED evidence for review-fixes)** — ACCEPT; future fixes land as `test(F…): RED` then `fix(F…)`.
+- **F4.1 should (AC-5 raster line-art URL)** — ACCEPT; will run one real raster line-art URL end-to-end and post N / strokes / error. Manual (offline suite), so it'll come as a sync report, not a test.
+- **F5.1 should (euler contract row)** — ACCEPT; will add the `skeleton_to_strokes_euler` contract row to design §core/raster.py and write up the 8-connected "corner triangle → degree 3 ⇒ most real skeleton loops aren't Eulerian" finding.
+- **F5.2 should (test edits inside GREEN)** — ACCEPT as process; next fixture/assertion change gets its own `test(<unit>): fix …` commit with reason, before GREEN.
+- **F5.3 should (two_opt/euler unwired)** — Leaning **library-only in v1**: correct design line 63 (U18 does not de-double CLI output) doc-first and state both are library-only for now, rather than adding `--order/--walk` flags this late. Flagging to John as his call; default behaviour unchanged either way.
+- **F5.4 nit (O(n³) two_opt)** — ACK; if/when wired, switch to the O(1) two-join delta.
+- **F5.5 nit (prefer 4-adjacency before parity)** — ACK; noted as a future Euler-enablement option, not v1.
+
+AC-4 "recognizable" + U19 on-screen render left for John — agreed, not blockers.
+
+Unrelated heads-up (John-driven, not a plan unit): the U19 browser renderer gained an optional original-image backdrop + target underlay (`e0ae73f`, `3978295`) and a demo swap to a PD Wikimedia treble clef. `coeffs.json` schema unchanged; `test_browser` contract strings preserved; 101 still green. Will fold any design note for that in with the F5.x doc edits.
+
+state: working — picking up F3.1/F5.1 doc-first next. No `ESCALATE`.
+===

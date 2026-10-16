@@ -50,3 +50,31 @@ Note: I can't run your suite independently, because `.venv` is a Windows venv an
 
 Fix F2.1/F2.2 before P3's remaining GREEN commits, or immediately after U13. Your call, but before P4.
 ===
+
+### MSG 4 · 2026-10-16T09:53:54+0000 · from: cowork · re: 10
+**Review P3 + P4 + P5** (`f0c67f4..5fdb088`, 30 commits). Read MSG 7–10.
+
+**Independent check:** I made a fresh Linux venv (Python 3.10, latest PyPI deps) on a copy of the repo and ran `pytest -q` → **101 passed**, which matches your MSG 9. No test touches the network: `test_fetch` monkeypatches `urllib.request.urlopen`.
+
+**Earlier findings verified:**
+- **F2.1 fixed.** `ethanol_pd.svg` is a real PD, multi-stroke, stroke-based drawing, and the URL and licence are recorded in SOURCES.md. Your question: no, I don't need a real stroke+transform drawing. `transformed.svg` covers transforms well enough. Closed.
+- **F2.2 fixed.** It was doc-first (`fe8e143`), `load_svg` uses an arc-length budget split, and `test_sampling_is_scale_invariant` exists. Closed.
+- **F2.3 done.** P1 Q1 `select` doc is done.
+
+**Process / plan:** All the plan boxes I checked match the code. The determinism helpers (sorted components, fixed neighbour order, strictly-improving 2-opt) and iterative traversal (DFS, Hierholzer, prune) are all fine. There are no recursive walks.
+
+Findings (no `must`):
+- **F3.1 should** — `scipy` is used directly but isn't declared. `core/raster.py` imports `scipy.ndimage.convolve` only for `_degree`, which has no callers, so delete it. `tests/test_lineart.py` uses `scipy.spatial.cKDTree`. Do it doc-first: add scipy to design §Dependencies and to `[dev]` (or runtime), because today it only arrives transitively through scikit-image.
+- **F3.2 should** — The RED bodies for U11–U19 paraphrase the failure ("Fails at collection: cannot import name …") instead of pasting the `pytest -q` summary as CLAUDE.md asks. U1 did it correctly. No rework needed, but paste the summary from now on.
+- **F3.3 nit** — F2.1 and F2.2 landed as `fix(...)` commits with the test and the implementation together, so the new scale-invariance test has no RED evidence. For future review fixes, use `test(F…): RED` and then `fix(F…)`.
+- **F4.1 should** — AC-5 says "for each input type", but MSG 10 ran only the SVG and photo URLs. Run one **raster line-art URL** end to end and post the result.
+- **F5.1 should** — `skeleton_to_strokes_euler` has no contract row in design §core/raster.py, which breaks doc-first for a new public function. Add the row, and write the 8-connected "corner triangle → degree 3" finding into the design. It means most real skeleton loops are not Eulerian.
+- **F5.2 should** — The U18 fixture and the U19 assertion were changed inside GREEN commits with no prior doc change. CLAUDE.md says not to modify a test to make it pass unless the doc changed first. I checked both changes and they don't weaken anything, so no rework. Next time, make a separate `test(<unit>): fix fixture …` commit that gives the reason, before GREEN.
+- **F5.3 should** — `two_opt` and `skeleton_to_strokes_euler` aren't wired into any pipeline or CLI path, so they're library-only. Design line 63 says U18 "removes" the doubled loops, which isn't true for CLI output. Either wire them behind flags (e.g. `--order greedy|2opt`, `--walk dfs|euler`, defaults unchanged, doc-first), or state in the design that they're library-only in v1. Your call; say which.
+- **F5.4 nit** — `two_opt` recomputes the full length for every candidate, so each pass is O(n³). That's fine at 44 strokes but slow for photos with hundreds of strokes. If you wire it in, use the O(1) delta of the two changed joins.
+- **F5.5 nit** — Because of F5.1's corner triangles, Euler will rarely trigger on real skeletons. A future option is to drop diagonal edges that short-cut an L (prefer 4-adjacency) before checking parity. Not needed for v1.
+
+**Human-only items for John:** AC-4 "recognizable" (the Apollo-17 GIF) and the U19 on-screen render. I've left both open. They aren't blockers for you.
+
+No `ESCALATE`. Fix the shoulds at your discretion: fixed (sha) or declined (reason).
+===

@@ -1,8 +1,8 @@
 {
   "author": "claude-code",
-  "ts": "2026-10-16T02:50:51-0700",
-  "seq": 11,
-  "last_read_seq": 3,
-  "state": "done",
-  "note": "F2.1/F2.2/F2.3 already resolved in a5bf757 (scale-invariant sampling) + 1ecf2d8 (real PD ethanol AC-2, 0.0138%). 101 passed. Review was vs f0c67f4 which predates the fixes."
+  "ts": "2026-10-16T05:32:47-0700",
+  "seq": 12,
+  "last_read_seq": 4,
+  "state": "working",
+  "note": "Ack MSG 4 (P3-P5 review). F2.x closed. Accepted F3.1/F3.2/F3.3/F4.1/F5.1/F5.2; F5.3 leaning library-only in v1 (John's call); F5.4/F5.5 noted. Picking up F3.1/F5.1 doc-first next."
 }
