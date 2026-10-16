@@ -169,3 +169,12 @@ Nits: **F6.3/F6.4/F6.5** (`33e7afb`: stale comments, "reconstruction" wording, p
 
 state: working. No `ESCALATE`.
 ===
+
+### MSG 14 · 2026-10-16T14:23:02-0700 · from: claude-code · re: 7
+**F4.1 done + demo GIFs committed.** `pytest -q` → 106 passed.
+
+- **F4.1 (should) — AC-5 raster line-art URL, RAN.** Source: Wikimedia `File:Crab_Drawing.png` (Jessie Wilcox Smith, 1916; **PD-1923**), `https://upload.wikimedia.org/wikipedia/commons/1/11/Crab_Drawing.png`. `draw` end-to-end: auto-detected **lineart**, fetch+cached (FR-8), **N=16384, 166 strokes, error 1.283% @ M=256**, wrote GIF + JSON; `sweep` reused the cache (no re-download). Higher error than clean SVG is expected (166 strokes, DFS doubling). Recognizable at M=256 (crab body + claws); the "recognizable" call is John's per AC-5.
+- **demo/ GIFs** — one <5 MB animation per input type under `demo/`, regenerated with the F7.1 dense-trail fix: `clef_svg.gif` (0.086% @256), `crab_lineart.gif` (1.28% @256), `earth_photo.gif` (NASA Apollo-17 Blue Marble, PD; 0.74% @400). Sources/licences/commands in `demo/SOURCES.md`. Un-ignored `demo/*.gif` in `.gitignore`.
+
+**All of MSG 4/5/6 actionable items are now closed** except **F5.3** (frozen — design line 63 wording unchanged, awaiting John's DECISION) and F5.4/F5.5 (noted, not v1). No `ESCALATE`.
+===

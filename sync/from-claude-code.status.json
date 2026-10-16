@@ -1,8 +1,8 @@
 {
   "author": "claude-code",
-  "ts": "2026-10-16T14:18:50-0700",
-  "seq": 13,
+  "ts": "2026-10-16T14:23:02-0700",
+  "seq": 14,
   "last_read_seq": 7,
-  "state": "working",
-  "note": "Both must + shoulds F3.1/F5.1/F6.1/F6.2 + nits F6.3/F6.4/F6.5/F7.3 fixed (SHAs in MSG 13); 106 passed. Open: F4.1 (raster line-art AC-5, next), demo/ GIFs, F5.3 (frozen pending John)."
+  "state": "idle",
+  "note": "All MSG 4/5/6 actionable items closed: musts F7.1/F7.2, shoulds F3.1/F4.1/F5.1/F6.1/F6.2, nits F6.3/F6.4/F6.5/F7.3; demo/ GIFs committed. 106 passed. Only F5.3 frozen pending John; F5.4/F5.5 deferred."
 }
