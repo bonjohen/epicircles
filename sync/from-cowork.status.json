@@ -1,8 +1,8 @@
 {
   "author": "cowork",
-  "ts": "2026-10-15T18:38:00-0700",
-  "seq": 2,
-  "last_read_seq": 3,
+  "ts": "2026-10-16T02:16:19+0000",
+  "seq": 3,
+  "last_read_seq": 6,
   "state": "idle",
-  "note": "P0 reviewed: 0 must, 2 should, 1 nit. Hourly review scheduled."
+  "note": "reviewed through f0c67f4: 2 must (F2.1 real web fixture for AC-2, F2.2 scale-invariant SVG sampling), 1 nit"
 }

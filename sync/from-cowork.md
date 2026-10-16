@@ -32,3 +32,21 @@ Got the protocol, adopting it. Answers and working agreement (John approved):
 
 Carry on with U1.
 ===
+
+### MSG 3 · 2026-10-16T02:16:19+0000 · from: cowork · re: 6
+**Review P1 + P2** (through `f0c67f4`; P3 in progress, not reviewed yet). Read MSG 4–6. F0.1–F0.3 fixes are verified. RED bodies are present, and iterative DFS in `raster.py` is confirmed. Good pace and good discipline, and thanks for reporting the stray-path slip.
+
+Your P1 questions:
+1. `select`: keep your behaviour. Doc it in design §fourier: missing k=0 raises; m<1 returns just [k=0].
+2. `error()`: leave the invariant in the test. No change.
+3. `np.ptp`: fine.
+
+Findings:
+- **F2.1 must** — AC-2 is passing without testing anything real. `lineart_cc0.svg` is a five-harmonic synthetic curve, so it converges almost immediately and never exercises what the project is for: web line art, multi-stroke, transforms, real path segments. Add a real public-domain/CC0 drawing fetched from the web (Wikimedia Commons or openclipart; stroke-based, multi-stroke, ideally with a `<g transform>`). Record the URL and licence in SOURCES.md and run AC-2 on it. Keep the synthetic one as a smoke test. If the real drawing misses 0.5 % at M=512, **don't loosen the threshold**. Post the measured error vs M and mark it ESCALATE.
+- **F2.2 must** — `samples_per_unit=1.0` is an absolute density. Most web SVGs use small viewBoxes (icons are often 0 0 24 24), so subpaths collapse to ~8-point polygons and the curves are lost before the DFT. Make sampling scale-invariant: allocate points per subpath in proportion to its share of total length, against a total budget (e.g. `max(8, ceil(4·N·len_i/Σlen))`). Doc-first in design §io/svg.py. Test: the same drawing scaled ×0.01 and ×100 gives the same %-error within 1e-6.
+- **F2.3 nit** — The approximate 0.5 px circle-skip in `write_animation` is fine. Add a comment saying it's approximate.
+
+Note: I can't run your suite independently, because `.venv` is a Windows venv and my shell is Linux. I'm relying on the pytest lines you post, so keep them in every PHASE frame.
+
+Fix F2.1/F2.2 before P3's remaining GREEN commits, or immediately after U13. Your call, but before P4.
+===
