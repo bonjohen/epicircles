@@ -1,0 +1,70 @@
+"""U10: SVG pipeline via the CLI, plus AC-1b and AC-2.
+
+Asserts on produced files and on spectrum/error data — never on pixels.
+"""
+import json
+from pathlib import Path
+
+import numpy as np
+from PIL import Image
+
+from epicycles.cli import main, run_svg_pipeline
+from epicycles.core.fourier import error
+
+FIX = Path(__file__).parent / "fixtures"
+
+
+def test_draw_svg_produces_gif_and_json(tmp_path):
+    out = tmp_path / "out.gif"
+    coeffs = tmp_path / "c.json"
+    rc = main(
+        [
+            "draw",
+            str(FIX / "circle.svg"),
+            "--terms",
+            "3",
+            "--frames",
+            "6",
+            "--fps",
+            "10",
+            "--out",
+            str(out),
+            "--json",
+            str(coeffs),
+        ]
+    )
+    assert rc == 0
+    assert out.exists() and out.stat().st_size > 0
+    with Image.open(out) as im:
+        assert getattr(im, "n_frames", 1) == 6
+    obj = json.loads(coeffs.read_text())
+    assert set(obj) == {"N", "ordering", "terms"}
+    assert len(obj["terms"]) == 3
+
+
+def test_info_prints_error_table(tmp_path, capsys):
+    rc = main(["info", str(FIX / "circle.svg"), "--terms", "16"])
+    assert rc == 0
+    out = capsys.readouterr().out.lower()
+    assert "connector" in out
+    assert "rms" in out or "error" in out
+
+
+def test_ac1b_circle_pipeline_single_harmonic():
+    # Full spectrum of the resampled <circle> r=30: excluding k=0, the |k|=1
+    # term equals r within 1e-3*r and every other term is below 1e-3*r.
+    res = run_svg_pipeline(str(FIX / "circle.svg"), "auto", 256, "magnitude")
+    k, c = res.full
+    r = 30.0
+    nonzero = k != 0
+    mags = np.abs(c)
+    k1 = mags[np.abs(k) == 1].max()
+    assert abs(k1 - r) < 1e-3 * r
+    other = mags[nonzero & (np.abs(k) != 1)]
+    assert np.all(other < 1e-3 * r)
+
+
+def test_ac2_lineart_reconstructs_under_half_percent():
+    res = run_svg_pipeline(str(FIX / "lineart_cc0.svg"), "auto", 512, "magnitude")
+    rep = error(res.z, res.full, res.kept)
+    assert rep.pct_height < 0.5
