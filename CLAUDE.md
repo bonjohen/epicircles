@@ -26,7 +26,7 @@ Do not modify a test to make it pass unless the doc changed first and the commit
 - Type hints everywhere; complex paths are `np.ndarray[complex128]` shape `(N,)`.
 - Recursion: no recursive graph/pixel traversal; use explicit stacks (real skeletons exceed Python's recursion limit).
 - Commands: `pytest -q`, `python -m epicycles --help`.
-- Coordination: a reviewer posts notes in `docs/handoff.md`. Read it at session start; when you finish a phase, append a dated status entry there.
+- Coordination: coordinate via `sync/` per `sync/PROTOCOL.md`; check `sync/from-cowork.status.json` between units, and append a `PHASE P<n> DONE` frame to `sync/from-claude-code.md` at each phase end.
 
 ## Commit Message Format (relaxed — overrides global)
 
