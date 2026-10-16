@@ -16,3 +16,4 @@ venv/
 *.gif
 *.mp4
 .cache/
+scratch/
