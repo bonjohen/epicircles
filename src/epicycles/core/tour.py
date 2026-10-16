@@ -68,3 +68,54 @@ def join_strokes(strokes: list[np.ndarray]) -> tuple[np.ndarray, float]:
     if closing <= tol:
         closing = 0.0
     return tour, float(joins + closing)
+
+
+def _endpoints(stroke: np.ndarray, reverse: bool) -> tuple[complex, complex]:
+    """(start, end) of a stroke in the given orientation."""
+    if reverse:
+        return complex(stroke[-1]), complex(stroke[0])
+    return complex(stroke[0]), complex(stroke[-1])
+
+
+def order_connector_length(
+    strokes: list[np.ndarray], order: list[tuple[int, bool]]
+) -> float:
+    """Cyclic connector length of an ``(index, reversed)`` ordering.
+
+    ``Σ_i |end(order[i]) − start(order[i+1])|`` including the closing jump from
+    the last stroke's end back to the first stroke's start.
+    """
+    pts = [_endpoints(strokes[i], rev) for i, rev in order]
+    n = len(pts)
+    return float(
+        sum(abs(pts[k][1] - pts[(k + 1) % n][0]) for k in range(n))
+    )
+
+
+def two_opt(
+    strokes: list[np.ndarray], order: list[tuple[int, bool]]
+) -> list[tuple[int, bool]]:
+    """Improve a stroke ordering with strictly-improving cyclic 2-opt moves.
+
+    A move reverses a contiguous sub-segment ``order[i:j+1]`` (flipping each
+    stroke's orientation). Only moves that strictly reduce
+    :func:`order_connector_length` are accepted, so the connector length never
+    increases; the fixed scan order makes the result deterministic.
+    """
+    order = list(order)
+    n = len(order)
+    best = order_connector_length(strokes, order)
+    improved = True
+    while improved:
+        improved = False
+        for i in range(n):
+            for j in range(i + 1, n):
+                cand = (
+                    order[:i]
+                    + [(idx, not rev) for idx, rev in reversed(order[i : j + 1])]
+                    + order[j + 1 :]
+                )
+                length = order_connector_length(strokes, cand)
+                if length < best - 1e-12:
+                    order, best, improved = cand, length, True
+    return order

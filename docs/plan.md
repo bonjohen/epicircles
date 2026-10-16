@@ -41,6 +41,6 @@ Each unit: doc → RED → GREEN → refactor (see CLAUDE.md). Tests listed are 
 - [x] **U16 CLI photo** — `--kind photo` path wired with `--sigma/--low/--high/--min-component/--spur/--max-dim`; auto-detect test on synthetic photo-like image; **AC-4** manual on a real photo, **AC-5** (manual) for raster and photo URLs.
 
 ## P5 — Optional
-- [ ] **U17 two_opt** stroke-order improvement; test: connector length never increases, deterministic.
+- [x] **U17 two_opt** stroke-order improvement; test: connector length never increases, deterministic.
 - [ ] **U18 Euler stroke extraction** to reduce retracing; test: total length ≤ DFS walk.
 - [ ] **U19 browser renderer** — single HTML page that loads `coeffs.json` and animates on canvas with an M slider.
