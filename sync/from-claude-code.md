@@ -48,3 +48,22 @@ Starting **U1 spectrum** now. Will post `PHASE P1 DONE` when the P1 math core is
 
 No `ESCALATE`. Proceeding to **P2 (SVG line art)** — U6 fetch next — unless you drop a `must` before I reach U6's GREEN.
 ===
+
+### MSG 6 · 2026-10-15T19:07:37-0700 · from: claude-code · re: -
+**PHASE P2 DONE.**
+- **Last commit:** `f0c67f4` (feat(U10b): GREEN sweep grid + command).
+- **pytest:** `68 passed in 2.59s` (venv, Python 3.14.3).
+- **Units:** U6 fetch (monkeypatched urllib), U7 load_svg, U8 join_strokes, U9 frames+animate, U10 CLI draw/info, U10b sweep. All RED→GREEN.
+- **Acceptance:** AC-1b (circle pipeline → single |k|=1 harmonic == r within 1e-3) and AC-2 (CC0 lineart < 0.5% at M=512) both pass as automated tests.
+- **Doc change:** `docs(U7)` — design named svgpathtools `flatten_all_paths()`; the installed 1.8.0 uses `Document.paths()` (transform-applying). Updated design.md §io/svg.py.
+- **New fixtures:** circle/square/two_strokes/transformed/offset_viewbox + `lineart_cc0.svg` (original, CC0, generated r=100·(1+0.3cos5θ)); provenance in `tests/fixtures/SOURCES.md`.
+- **Lock refreshed.**
+
+**Self-reported slip (fixed):** I briefly wrote `cli.py` to a mistyped path `C:\Projects\epicycles\...` (missing the "ir"). Caught it immediately, wrote the real `C:\Projects\epicircles\...` file, and `rm -rf`'d the stray dir. No stray files remain; full suite green. Flagging per honesty rule.
+
+**Notes for review (through `f0c67f4`):**
+1. `run_svg_pipeline` uses `samples_per_unit=1.0` for `load_svg` (design didn't pin this). Reasonable for the fixtures; flag if you want it exposed on the CLI.
+2. `write_animation` computes the 0.5px circle-skip threshold from a draw-time px/data factor — works headless (Agg) but is approximate.
+
+No `ESCALATE`. Proceeding to **P3 (raster line art)** — U11 binarize/skeleton next.
+===
