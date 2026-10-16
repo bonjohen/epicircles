@@ -41,6 +41,7 @@
     </label>
     <label><input id="showCircles" type="checkbox" checked /> circles</label>
     <label><input id="showTarget" type="checkbox" checked /> target image</label>
+    <label><input id="showOriginal" type="checkbox" checked /> original (10%)</label>
     <button id="reset">restart trail</button>
     <span id="status" class="hint">loading coeffs.json…</span>
   </div>
@@ -56,7 +57,26 @@ const termsVal = document.getElementById("termsVal");
 const speedSlider = document.getElementById("speed");
 const showCircles = document.getElementById("showCircles");
 const showTarget = document.getElementById("showTarget");
+const showOriginal = document.getElementById("showOriginal");
 const statusEl = document.getElementById("status");
+
+// optional original source image, shown as a faint backdrop (served alongside
+// coeffs.json as original.jpg). Missing file just means no backdrop.
+const bgImg = new Image();
+let bgReady = false;
+bgImg.onload = () => { bgReady = true; };
+[ "original.png", "original.jpg", "original.svg" ].reduce(
+  (p, name) => p.catch(() => new Promise((res, rej) => {
+    const probe = new Image();
+    probe.onload = () => { bgImg.src = name; res(); };
+    probe.onerror = rej; probe.src = name;
+  })), Promise.reject()
+).catch(() => {});
+// original.json gives the image frame's extent {w, h} in drawing coords
+// (pixel (row,col) -> x=col+0.5, y=H-row-0.5), so the photo registers exactly
+// with the reconstructed edges rather than being fit to the trace bbox.
+let bgExtent = null;
+fetch("original.json").then(r => r.ok ? r.json() : null).then(j => { bgExtent = j; }).catch(() => {});
 document.getElementById("reset").onclick = () => { trail.length = 0; };
 
 let spec = null;          // { N, ordering, terms:[{k,re,im}] }
@@ -106,12 +126,13 @@ function computeView() {
   const w = maxX - minX || 1, h = maxY - minY || 1;
   const pad = 0.1;
   const scale = Math.min(canvas.width / (w * (1 + pad)), canvas.height / (h * (1 + pad)));
-  view = { scale, ox: (minX + maxX) / 2, oy: (minY + maxY) / 2 };
+  view = { scale, ox: (minX + maxX) / 2, oy: (minY + maxY) / 2,
+           minX, maxX, minY, maxY };
 
   // Sample the full reconstruction (all terms) over one period — this closed
   // curve IS the original drawing; it's shown as a faint reference underlay.
   targetPath = [];
-  const steps = 2000;
+  const steps = 8000;
   for (let i = 0; i <= steps; i++) targetPath.push(evalAt(i / steps));
 }
 
@@ -125,6 +146,26 @@ function frame() {
   const m = parseInt(termsSlider.value, 10);
   termsVal.textContent = String(m);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // original source photo as a faint 10% backdrop. Map it to its true pixel
+  // frame [0,w]x[0,h] in drawing coords (from original.json) so it registers
+  // with the reconstructed edges; fall back to the trace bbox if absent.
+  if (showOriginal.checked && bgReady) {
+    let x0, y0, dw, dh;
+    if (bgExtent) {
+      [x0, y0] = toPx(bgExtent.x, bgExtent.y);  // image top-left in drawing coords
+      dw = bgExtent.w * view.scale;
+      dh = bgExtent.h * view.scale;
+    } else {
+      [x0, y0] = toPx(view.minX, view.maxY);
+      dw = (view.maxX - view.minX) * view.scale;
+      dh = (view.maxY - view.minY) * view.scale;
+    }
+    ctx.save();
+    ctx.globalAlpha = 0.1;
+    ctx.drawImage(bgImg, x0, y0, dw, dh);
+    ctx.restore();
+  }
 
   // faint underlay of the full target drawing (the "initial image")
   if (showTarget.checked && targetPath.length) {
