@@ -121,6 +121,32 @@ def test_error_mask_none_matches_v1():
     assert error(z, full, kept).pct_height == error(z, full, kept, mask=None).pct_height
 
 
+def test_trail_labels_maps_samples_to_trail():
+    from epicycles.render.frames import trail_labels
+
+    label = np.array([0, 0, 0, 0, PEN_UP, PEN_UP, 7, 7], dtype=np.int16)  # N=8
+    tl = trail_labels(label, 16)
+    assert tl.shape == (16,)
+    # trail point r carries the label of sample ⌊r/R · N⌋ (FR-11)
+    for r in range(16):
+        assert tl[r] == label[(r * 8) // 16]
+    assert (tl == PEN_UP).any() and (tl != PEN_UP).any()
+
+
+def test_write_animation_accepts_labels_and_skips_pen_up(tmp_path):
+    from PIL import Image
+
+    from epicycles.render.animate import write_animation
+
+    strokes = _two_strokes()
+    z, seg, clen = join_labeled(strokes)
+    zr, lab = resample_labeled(z, seg, 1024, jump_time=0.03)
+    kept = select(spectrum(zr), 64, "magnitude")
+    out = write_animation(kept, tmp_path / "pen.gif", 20, 10, original=zr, labels=lab)
+    assert out.exists()
+    assert Image.open(out).n_frames == 20
+
+
 def test_json_segments_round_trip():
     z = np.exp(2j * np.pi * np.arange(256) / 256)
     kept = select(spectrum(z), 5, "magnitude")
