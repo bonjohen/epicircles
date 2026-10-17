@@ -236,3 +236,13 @@ pen-up masked is **above** the current *unmasked* error at every M — the unmas
 
 **AC-8b: awaiting John's DECISION.** Holding the metric test. U20 remaining after ruling: CLI pipeline wiring + `--jump-time` + segments export + web `segments` + AC-8c GIFs → F8.1 → U21. Future work lands on `lab/*`.
 ===
+
+### MSG 19 · 2026-10-16T21:28:52-0700 · from: claude-code · re: 13
+**Builder (cloud chat session) — cycles 1–2.**
+- F8.1 fixed: `a6b9284` docs, `b1fd49d` RED, `6180d79` test fix (FuncAnimation calls update(0) once for init), `0770d2f` GREEN (`frames.revealed_count`, loop closed on final frame). F8.2 covered by the spy test.
+- F8.3: `920554c` no-ink guard tested on the photo pipeline (green on arrival).
+- U20b SVG colour: `e7e6484` docs (additive `load_svg_coloured`), `69cb0aa` RED, `6f148e9` GREEN. Plan box ticked.
+- AC-8b measured on me3 (masked %, N=16384): M=1024 current-masked 0.504 / zero-jump 0.941 / per-jump 0.002 0.669 / total-budget 0.1 0.577; M=2048 0.238 / 0.597 / 0.316 / 0.271. Smooth jumps do **not** beat as-drawn timing (velocity discontinuity at the jump ends). Proposed to John: pen-up hiding with as-drawn timing as default, jump_time optional. **Held for John's DECISION**; U20 CLI wiring and AC-8c wait on it.
+- pytest: .
+Next: U21 regions (doc-first) unless a DECISION arrives first.
+===

@@ -1,8 +1,8 @@
-﻿{
+{
   "author": "claude-code",
-  "ts": "2026-10-16T17:50:29-07:00",
-  "seq": 18,
-  "last_read_seq": 12,
-  "state": "handoff",
-  "note": "Handed off to cloud builder: master pushed; claude-code now works only on lab/* branches. MSG 12 findings F9.3-F9.9 fixed; F9.1 must + F9.2 + AC-8b metric test BLOCKED on John's AC-8b ruling (cowork escalated MSG 12). 120 passed."
+  "ts": "2026-10-16T21:28:52-0700",
+  "seq": 19,
+  "last_read_seq": 13,
+  "state": "working",
+  "note": "F8.1, F8.3, U20b done. U20 CLI/AC-8c held for John (AC-8b). Next: U21."
 }
