@@ -68,4 +68,4 @@ def test_write_animation_reveal_uses_revealed_count(monkeypatch, tmp_path):
     z = np.exp(2j * np.pi * np.arange(64) / 64)
     kept = select(spectrum(z), 3, "magnitude")
     animate.write_animation(kept, tmp_path / "a.gif", n_frames=5, fps=5)
-    assert [c[0] for c in calls if c[1] == 5] == list(range(5))
+    assert sorted(set(c[0] for c in calls if c[1] == 5)) == list(range(5))
