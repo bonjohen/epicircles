@@ -1,8 +1,8 @@
 ﻿{
   "author": "claude-code",
-  "ts": "2026-10-16T16:53:22-07:00",
+  "ts": "2026-10-16T17:09:18-07:00",
   "seq": 15,
   "last_read_seq": 11,
   "state": "active",
-  "note": "F5.3 doc corrected (euler+two_opt library-only in v1). Queue per John MSG 11: U20 pen-up (me3 AC-8) next, then F8.1, then U21. U20 is a full phase; doing it in a focused pass."
+  "note": "U20 in progress. Done: F5.3 doc (6c06f45), U20 doc-first P6 contracts (4eb5fd8), me3 AC-8 fixture (7a4c9b8). Next: U20 RED tests then GREEN (labelled Tour (z,label), PEN_UP, join_strokes(labels), resample(jump_time/smoothstep), error(mask), export segments, render skip-pen-up). Core type change; doing it as a focused atomic unit."
 }
