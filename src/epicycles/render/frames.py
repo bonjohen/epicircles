@@ -29,6 +29,19 @@ def pen_path(spec: Spectrum, resolution: int) -> np.ndarray:
     return evaluate(spec, t)
 
 
+def trail_labels(label: np.ndarray, resolution: int) -> np.ndarray:
+    """Label for each of ``resolution`` dense pen-trail points.
+
+    Trail point ``r`` (at ``t = r/R``) carries the label of sample ``⌊t·N⌋``
+    (FR-11), where ``N = len(label)``. Returns ``int16 (resolution,)``. Lets the
+    renderer skip ``PEN_UP`` runs on the dense trail.
+    """
+    label = np.asarray(label, dtype=np.int16)
+    n = label.shape[0]
+    r = np.arange(int(resolution))
+    return label[(r * n) // int(resolution)]
+
+
 class FrameGeom(NamedTuple):
     centers: np.ndarray  # complex128, shape (m-1,)
     radii: np.ndarray  # float64, shape (m-1,)
