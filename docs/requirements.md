@@ -41,7 +41,7 @@ Input guidance: prefer **stroke-based** line art. Filled-shape SVGs (e.g. potrac
 - **AC-3** A raster line-art PNG, reconstructed at M=2048: every skeleton pixel lies within 2 px of the reconstruction (coverage), and ≥ 95 % of reconstruction samples lie within 2 px of a skeleton pixel (the rest are connectors).
 - **AC-4** A photo produces a recognizable animation; edge-filter parameters are exposed on the CLI.
 - **AC-5** (manual, since tests are offline) `python -m epicycles draw <url> --terms 256 --out out.gif` works end-to-end for each input type. The automated equivalent runs on local fixtures.
-- **AC-6** (U21) On a synthetic image (blue disk on a brown square on white), `regions` yields exactly two coloured loops — disk→blue and square outline→brown — with no pen-down sample within 1 px of a connector.
+- **AC-6** (U21) On a synthetic image (blue disk on a brown square on white): with `--boundaries foreground`, `regions` yields exactly two coloured loops, disk→blue and square outline→brown; with the default `both`, it yields three (the disk edge also appears as the brown square's hole, in brown). In both modes no pen-down sample lies within 1 px of a connector.
 - **AC-7** (U20) For a two-stroke drawing, masked error with smooth jumps at `jump_time=2/M` is ≤ masked error with zero-time jumps, and ≤ the unmasked arc-length baseline, at M ∈ {64, 256}.
 - **AC-8** (U20, on `me3`) (a) no pen-down sample lies on a connector; (b) at M ∈ {1024, 2048}, masked error with smooth jumps is lower than the current (unmasked) pipeline's error; (c) manual: `demo/me3_before.gif` (current behaviour) and `demo/me3_after.gif` (pen-up, smooth jumps), same M and frames, each under 5 MB, with masked error for both posted to sync.
 

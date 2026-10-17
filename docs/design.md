@@ -133,7 +133,17 @@ Implemented **additively** so the v1 `join_strokes`/`resample` (bare `complex128
 
 **SVG colour (U20b, FR-14).** Additive, like U20: `load_svg_coloured(path, samples) -> (strokes, colours)` with one `(r,g,b)` int tuple per stroke (each continuous subpath inherits its element's colour); `load_svg` keeps its signature and delegates, dropping colours. Colour comes from the element's `stroke`, resolved up the ancestor chain (a parent map built from the parsed tree, since `xml.etree` has no parent pointers): on each element a `style="stroke:…"` declaration wins over the `stroke=` attribute; the nearest element that sets either wins. Accepted forms: `#rgb`, `#rrggbb`, `rgb(r,g,b)`, or a CSS named colour from a small built-in table. `none`, missing, `currentColor`, gradients (`url(...)`) and anything unparseable → default ink `(0,0,0)`.
 
-**`core/regions.py` (U21, FR-15)** — detailed contract added when U21 starts. `quantize(rgb, p) -> (index, Palette)` via Pillow `Image.quantize(colors=p, method=MEDIANCUT, dither=NONE)` (deterministic, no k-means). `region_boundaries(index, palette, mode) -> list[(Stroke, colour_idx)]` via `skimage.measure.find_contours(mask, 0.5)`, each contour oriented region-on-the-left by signed shoelace area (holes reverse, correctly); drop contours shorter than `min_component`. Default `both` draws each shared edge twice side-by-side (John decision 2026-10-16); `foreground` draws it once in the smaller region's colour, excluding background. Background = palette index with the most border pixels.
+**`core/regions.py` (U21, FR-15)** (pure).
+- `quantize(rgb: uint8 HxWx3, p: int) -> (index: uint8 HxW, palette: uint8 (P,3))` via Pillow `Image.quantize(colors=p, method=MEDIANCUT, dither=NONE)`; deterministic (no k-means). `P <= p` (Pillow may return fewer).
+- `background_index(index) -> int`: palette index with the most border pixels; ties → lowest index.
+- `region_boundaries(index, mode="both", min_len=8) -> list[(Stroke, colour_idx)]`. For each palette index except the background: pad its mask by one pixel, `skimage.measure.find_contours(mask, 0.5)`, map `(row, col)` to pixel-centre coordinates `x = col + 0.5`, `y = H − row − 0.5` (same convention as `skeleton_to_strokes`). Each contour is **oriented region-on-the-left**: test the pixel 0.75 px to the left of the midpoint of its longest segment and reverse the contour if it is not in the region (robust for outer boundaries and holes alike). Contours with fewer than `min_len` points are dropped. Order: palette index ascending, then contour length descending, then first point (row, col) — deterministic.
+- **Neighbour of a contour** = majority palette index of the pixels 0.75 px to its **right**, sampled at up to 32 evenly spaced segment midpoints.
+- `mode="both"` (default, John 2026-10-16): keep every contour, so an edge shared by two non-background regions appears twice, once in each region's colour.
+- `mode="foreground"`: drop a contour whose neighbour is a non-background region of **smaller pixel area** (that region's own contour draws the shared edge). Majority vote means a contour that is only partly shared is judged by its dominant neighbour; documented approximation.
+
+**`io/image.py`** gains `load_rgb(path, max_dim) -> uint8 HxWx3` (alpha composited over white, same LANCZOS downscale as `load_gray`).
+
+**CLI** (U21): `--kind regions --palette P (default 6) --boundaries both|foreground`; `run_regions_pipeline` → strokes and colour indices → `join_labeled(strokes, labels)`. Rendering the per-region colours lands with the U20 CLI colour wiring; until then `draw` renders single-colour.
 
 ## Dependencies
 | package | why |
