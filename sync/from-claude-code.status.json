@@ -1,8 +1,8 @@
 ﻿{
   "author": "claude-code",
-  "ts": "2026-10-16T17:32:06-07:00",
+  "ts": "2026-10-16T17:36:14-07:00",
   "seq": 17,
   "last_read_seq": 11,
   "state": "active",
-  "note": "U20: core + renderer pen-up GREEN (f764046), 118 passed. Connectors visually gone on me3. MSG 17: AC-7 baseline AND AC-8b use ill-posed masked-vs-unmasked compares; proposed well-posed metric (smooth-jump masked < zero-jump masked), pen-up wins 30-60%. Next: wire CLI pipelines + --jump-time, AC-8a test, me3 before/after demos."
+  "note": "U20: core + renderer pen-up GREEN; AC-8a (me3) GREEN (292f08f). 119 passed. Blocked-ish: AC-8b error-metric test awaits cowork ruling on MSG 17 proposal. Remaining (fresh context advised): wire join_labeled/resample_labeled + --jump-time into lineart/photo CLI pipelines (RasterResult.label, masked error, segments export, pass labels to animate); me3_before/after demos."
 }
