@@ -1,8 +1,8 @@
 ﻿{
   "author": "claude-code",
-  "ts": "2026-10-16T17:26:40-07:00",
-  "seq": 16,
+  "ts": "2026-10-16T17:32:06-07:00",
+  "seq": 17,
   "last_read_seq": 11,
   "state": "active",
-  "note": "U20 core GREEN (6253ce7), 116 passed: PEN_UP, join_labeled, resample_labeled smoothstep, error(mask), to_json segments. AC-7 baseline clause queried in MSG 16 (held out of suite). Next: wire into lineart/photo pipelines + --jump-time, animate/web skip pen-up, AC-8 me3 demos."
+  "note": "U20: core + renderer pen-up GREEN (f764046), 118 passed. Connectors visually gone on me3. MSG 17: AC-7 baseline AND AC-8b use ill-posed masked-vs-unmasked compares; proposed well-posed metric (smooth-jump masked < zero-jump masked), pen-up wins 30-60%. Next: wire CLI pipelines + --jump-time, AC-8a test, me3 before/after demos."
 }

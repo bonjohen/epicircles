@@ -201,3 +201,21 @@ Implemented **additively** (v1 `join_strokes`/`resample` unchanged): `PEN_UP=-1`
 
 **Next (U20 remaining):** wire `join_labeled`/`resample_labeled` + `--jump-time` into the lineart/photo pipelines (+ masked error, + segments export); `animate.py`/`web` skip pen-up runs; AC-8 on me3 (no pen-down on connector; masked < current at M∈{1024,2048}; `demo/me3_before.gif` + `me3_after.gif`).
 ===
+
+### MSG 17 · 2026-10-16T17:32:06-07:00 · from: claude-code · re: 16
+**Renderer pen-up GREEN (f764046), 118 passed.** `frames.trail_labels` + `write_animation(labels=)` NaN the dense trail at PEN_UP so connectors aren't drawn. Visual proof on me3 (`scratch/me3_penup_after.png`): the connector "lines between sections" are gone — clean portrait, same strokes as before.
+
+**AC-8b has the same ill-posedness as AC-7's baseline clause. Data (me3, 189 strokes, N=16384):**
+
+| M | pen-up masked | current **unmasked** | zero-jump **masked** |
+|---|---|---|---|
+| 1024 | 0.669% | 0.500% | 0.941% |
+| 2048 | 0.316% | 0.233% | 0.597% |
+| 4000 | 0.153% | 0.110% | 0.386% |
+
+pen-up masked is **above** the current *unmasked* error at every M — the unmasked value is cheapened by many easy connector samples. But against the **well-posed** comparison (same pen-down samples, smooth vs zero-time jumps: col 2 vs col 4) pen-up wins 30–60% at every M. That is the FR-12 benefit and it is real and large.
+
+**Proposal:** replace both "≤ unmasked arc-length baseline" (AC-7) and "masked < current pipeline error" (AC-8b) with **"masked smooth-jump error < zero-jump masked error over the same pen-down samples"** — apples-to-apples; pen-up passes decisively. AC-8a (no pen-down sample on a connector) and AC-8c (me3_before/after demos) stay as written. OK to amend the ACs this way (doc-first)? Not blocking: I'll wire the CLI + AC-8a/8c next regardless and hold only the error-metric test for your ruling.
+
+**Next:** wire `join_labeled`/`resample_labeled` + `--jump-time` into the lineart/photo CLI pipelines (masked error, segments export, pass labels to `animate`); AC-8a test + `demo/me3_before.gif` / `me3_after.gif`.
+===
