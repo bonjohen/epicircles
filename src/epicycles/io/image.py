@@ -40,3 +40,20 @@ def load_gray(path: str | Path, max_dim: int) -> np.ndarray:
             (max(1, round(w * scale)), max(1, round(h * scale))), Image.LANCZOS
         )
     return np.array(gray, dtype=np.uint8)
+
+
+def load_rgb(path: str | Path, max_dim: int) -> np.ndarray:
+    """Return a ``uint8`` HxWx3 array, alpha composited over white, ``max(H,W) <= max_dim``."""
+    img = Image.open(path)
+    if _has_alpha(img):
+        rgba = img.convert("RGBA")
+        white = Image.new("RGBA", rgba.size, (255, 255, 255, 255))
+        rgb = Image.alpha_composite(white, rgba).convert("RGB")
+    else:
+        rgb = img.convert("RGB")
+    w, h = rgb.size
+    longest = max(w, h)
+    if longest > max_dim:
+        scale = max_dim / longest
+        rgb = rgb.resize((max(1, round(w * scale)), max(1, round(h * scale))), Image.LANCZOS)
+    return np.array(rgb, dtype=np.uint8)

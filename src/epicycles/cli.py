@@ -136,6 +136,35 @@ def run_photo_pipeline(
     return RasterResult(z, full, kept, len(strokes), connector_len, n, order, skel)
 
 
+def run_regions_pipeline(
+    src: str,
+    samples: str | int,
+    terms: int,
+    order: str,
+    palette: int = 6,
+    boundaries: str = "both",
+    max_dim: int = 800,
+    cache_dir: Path = _DEFAULT_CACHE,
+) -> RasterResult:
+    """Run the regions path: quantize -> region boundaries -> labelled tour -> DFT."""
+    from epicycles.core.regions import quantize, region_boundaries
+    from epicycles.core.tour import join_labeled
+    from epicycles.io.image import load_rgb
+
+    path = fetch(src, cache_dir)
+    index, _pal = quantize(load_rgb(path, max_dim), palette)
+    found = region_boundaries(index, mode=boundaries)
+    if not found:
+        raise ValueError("no ink found in image")
+    strokes = [z for z, _ in found]
+    tour, _seg, connector_len = join_labeled(strokes, labels=[c for _, c in found])
+    n = next_pow2_capped(len(tour)) if samples == "auto" else int(samples)
+    z = resample(tour, n)
+    full = spectrum(z)
+    kept = select(full, terms, order)
+    return RasterResult(z, full, kept, len(strokes), connector_len, n, order, index)
+
+
 def detect_kind(
     src: str, max_dim: int = 800, cache_dir: Path = _DEFAULT_CACHE
 ) -> str:
@@ -165,7 +194,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     draw = sub.add_parser("draw", help="render an epicycle animation from a source")
     draw.add_argument("src")
-    draw.add_argument("--kind", choices=["auto", "svg", "lineart", "photo"], default="auto")
+    draw.add_argument("--kind", choices=["auto", "svg", "lineart", "photo", "regions"], default="auto")
     draw.add_argument("--samples", default="auto")
     draw.add_argument("--terms", type=int, default=256)
     draw.add_argument("--order", choices=["magnitude", "frequency"], default="magnitude")
@@ -178,12 +207,14 @@ def build_parser() -> argparse.ArgumentParser:
     draw.add_argument("--high", type=float, default=0.2)
     draw.add_argument("--min-component", dest="min_component", type=int, default=20)
     draw.add_argument("--spur", type=int, default=5)
+    draw.add_argument("--palette", type=int, default=6)
+    draw.add_argument("--boundaries", choices=["both", "foreground"], default="both")
     draw.add_argument("--json", dest="json_path", default=None)
     draw.add_argument("--out", dest="out_path", default=None)
 
     info = sub.add_parser("info", help="print N, stroke count, connector length, error table")
     info.add_argument("src")
-    info.add_argument("--kind", choices=["auto", "svg", "lineart", "photo"], default="auto")
+    info.add_argument("--kind", choices=["auto", "svg", "lineart", "photo", "regions"], default="auto")
     info.add_argument("--samples", default="auto")
     info.add_argument("--terms", type=int, default=256)
     info.add_argument("--order", choices=["magnitude", "frequency"], default="magnitude")
@@ -199,7 +230,7 @@ def build_parser() -> argparse.ArgumentParser:
         "sweep", help="render a grid of reconstructions for several term counts"
     )
     sweep.add_argument("src")
-    sweep.add_argument("--kind", choices=["auto", "svg", "lineart", "photo"], default="auto")
+    sweep.add_argument("--kind", choices=["auto", "svg", "lineart", "photo", "regions"], default="auto")
     sweep.add_argument("--samples", default="auto")
     sweep.add_argument("--terms", default="1,4,16,64,256,1024")
     sweep.add_argument("--order", choices=["magnitude", "frequency"], default="magnitude")
@@ -229,6 +260,12 @@ def _resolve(args: argparse.Namespace):
             args.src, args.samples, args.terms, args.order,
             sigma=args.sigma, low=args.low, high=args.high,
             min_component=args.min_component, spur=args.spur, max_dim=args.max_dim,
+        )
+    if kind == "regions":
+        return run_regions_pipeline(
+            args.src, args.samples, args.terms, args.order,
+            palette=getattr(args, "palette", 6),
+            boundaries=getattr(args, "boundaries", "both"), max_dim=args.max_dim,
         )
     raise NotImplementedError(f"input kind {kind!r} is not implemented yet")
 
