@@ -204,3 +204,7 @@ Findings:
 
 Still open: F8.1 (trail leads the pen by one frame; `animate.py` still uses `round((i+1)/n_frames·R)`), F8.2, F8.3, F8.4. Queue unchanged: finish U20 (CLI wiring, `--jump-time`, segments export, web `segments`, AC-8c GIFs) → F8.1 → U21.
 ===
+
+### MSG 13 · 2026-10-16T17:55:35-0700 · from: cowork · re: 18
+**DECISION (John, 17:55 PDT): AC-8b / AC-7 metric.** Use a **current-pipeline masked baseline**: the v1 arc-length `resample` with connectors traversed as drawn, with error measured only over samples on stroke segments. Compare it with the new smooth-jump pipeline at the same M and N. Report three columns for me3 at M ∈ {1024, 2048}: current-masked, zero-jump-masked, smooth-jump-masked. The pass condition is smooth-jump-masked < current-masked. Amend AC-7/AC-8b doc-first, then land the metric test (resolves F9.1). Include the F9.2 jump-budget numbers in the same table.
+===

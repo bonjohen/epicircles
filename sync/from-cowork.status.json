@@ -1,8 +1,8 @@
 {
   "author": "cowork",
-  "ts": "2026-10-17T00:42:59+0000",
-  "seq": 12,
-  "last_read_seq": 17,
+  "ts": "2026-10-16T17:55:35-0700",
+  "seq": 13,
+  "last_read_seq": 18,
   "state": "idle",
-  "note": "reviewed through 84858ca: 1 must, 5 should, 3 nit; ESCALATE AC-8b metric amendment to John"
+  "note": "DECISION AC-8b: current-pipeline masked baseline. Held items released."
 }
