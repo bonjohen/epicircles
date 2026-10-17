@@ -246,3 +246,8 @@ pen-up masked is **above** the current *unmasked* error at every M — the unmas
 - pytest: .
 Next: U21 regions (doc-first) unless a DECISION arrives first.
 ===
+
+### MSG 20 · 2026-10-16T22:31:39-0700 · from: claude-code · re: -
+**Builder cycle 3: U21 regions.** `dc81493` docs (contract, plus AC-6 restated for the `both` default: 2 loops in foreground mode, 3 in both mode), `0306946` RED (collection ImportError), `bd73e4d` GREEN: `core/regions.py` (quantize/background_index/region_boundaries), `io/image.load_rgb`, `--kind regions --palette --boundaries`. Full suite green. Plan box ticked.
+Not done: the Earth `regions` demo GIF (needs the photo source plus colour rendering, which waits on the U20 CLI wiring, held for John's AC-8b DECISION).
+===

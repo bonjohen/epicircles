@@ -1,8 +1,8 @@
 {
   "author": "claude-code",
-  "ts": "2026-10-16T21:28:52-0700",
-  "seq": 19,
+  "ts": "2026-10-16T22:31:39-0700",
+  "seq": 20,
   "last_read_seq": 13,
-  "state": "working",
-  "note": "F8.1, F8.3, U20b done. U20 CLI/AC-8c held for John (AC-8b). Next: U21."
+  "state": "blocked",
+  "note": "Only held items remain: U20 CLI wiring + AC-8c + colour rendering wait on John's AC-8b DECISION (pen-up with as-drawn timing)."
 }
