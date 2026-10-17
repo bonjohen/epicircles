@@ -23,6 +23,11 @@ Input guidance: prefer **stroke-based** line art. Filled-shape SVGs (e.g. potrac
 - **FR-8** The system MUST accept a URL for any input type, download it once, and cache by SHA-256 of the URL. If the URL has no file extension, it is taken from the response Content-Type.
 - **FR-9** The system MUST export coefficients as JSON `{N, ordering, terms:[{k, re, im}]}` so other renderers (e.g. a browser canvas) can consume them.
 - **FR-10** Multi-stroke inputs MUST be joined into one tour with connector segments; total connector length MUST be reported, including the closing jump back to the start unless the tour is already closed.
+- **FR-11** (U20) Every tour sample MUST carry a label: a colour index ≥ 0, or `PEN_UP = -1`. Renderers MUST NOT draw pen-up spans. Labels are tied to the parameter t, not to position: the colour at time t is the label of sample ⌊t·N⌋.
+- **FR-12** (U20) Connector segments MUST be pen-up and MUST be traversed with a smooth speed profile (zero velocity at both ends) in a fixed parameter-time slot `jump_time` (fraction of the period per jump; CLI `--jump-time`, default `2/M` clamped to [0.002, 0.05]). Visible strokes keep constant speed and share the remaining time in proportion to their length.
+- **FR-13** (U20) Reported error MUST be computed over pen-down samples only ("masked error"). Parseval no longer applies to it, so masked error comes from the samples directly. The unmasked Parseval check stays as an internal consistency test.
+- **FR-14** (U20b) SVG strokes MUST take their colour from the `stroke` attribute (style or attribute, inherited through groups; `none`/missing → default ink).
+- **FR-15** (U21) A new input kind `regions` MUST quantize the image to a palette of P colours (default 6, `--palette P`) and trace the boundary of each colour region, colouring each boundary by its interior region. For shared boundaries, `--boundaries both|foreground` (default **`both`**, per John decision 2026-10-16): `both` draws each shared edge twice side by side, each pass in the colour of the region on its left; `foreground` draws each shared edge once in the colour of the smaller-area region, excluding the background colour (the palette entry with the largest border-pixel count).
 
 ## Non-functional
 - **NFR-1** Deterministic: identical input + options + environment (same numpy build) → identical coefficient JSON bytes. Across numpy builds, FFT results may differ in the last bit, so only numeric equality to 1e-12 is promised.
@@ -36,6 +41,9 @@ Input guidance: prefer **stroke-based** line art. Filled-shape SVGs (e.g. potrac
 - **AC-3** A raster line-art PNG, reconstructed at M=2048: every skeleton pixel lies within 2 px of the reconstruction (coverage), and ≥ 95 % of reconstruction samples lie within 2 px of a skeleton pixel (the rest are connectors).
 - **AC-4** A photo produces a recognizable animation; edge-filter parameters are exposed on the CLI.
 - **AC-5** (manual, since tests are offline) `python -m epicycles draw <url> --terms 256 --out out.gif` works end-to-end for each input type. The automated equivalent runs on local fixtures.
+- **AC-6** (U21) On a synthetic image (blue disk on a brown square on white), `regions` yields exactly two coloured loops — disk→blue and square outline→brown — with no pen-down sample within 1 px of a connector.
+- **AC-7** (U20) For a two-stroke drawing, masked error with smooth jumps at `jump_time=2/M` is ≤ masked error with zero-time jumps, and ≤ the unmasked arc-length baseline, at M ∈ {64, 256}.
+- **AC-8** (U20, on `me3`) (a) no pen-down sample lies on a connector; (b) at M ∈ {1024, 2048}, masked error with smooth jumps is lower than the current (unmasked) pipeline's error; (c) manual: `demo/me3_before.gif` (current behaviour) and `demo/me3_after.gif` (pen-up, smooth jumps), same M and frames, each under 5 MB, with masked error for both posted to sync.
 
 ## Out of scope (v1)
-Real-time GUI, freehand drawing input, colour, 3-D, GPU.
+Real-time GUI, freehand drawing input, 3-D, GPU.

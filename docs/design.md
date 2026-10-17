@@ -11,7 +11,7 @@ Every arrow left of `render` is a pure function in `core/` except `fetch`/`load`
 ## Coordinates and types
 - A point is a complex number `x + iy`, **y up**. The SVG loader negates y (`y_up = -y_svg`), which works for any viewBox origin. The image loader uses pixel centres (`y = H - row - 0.5`).
 - `Stroke`: `np.ndarray[complex128]`, shape `(m,)`, m ≥ 2, open polyline, no implied closure.
-- `Tour`: `np.ndarray[complex128]`, shape `(n,)`, closed (last point connects to first; first point is **not** repeated at the end).
+- `Tour`: the closed path. Up to U19 this is a bare `np.ndarray[complex128]`, shape `(n,)`, closed (last point connects to first; first point is **not** repeated at the end). **From U20** a Tour is a pair `(z: complex128 (n,), label: int16 (n,))`: same geometry in `z`, plus a per-sample label — a colour index ≥ 0, or `PEN_UP = -1` for connector samples renderers must not draw. See §P6.
 - `Spectrum`: `(k: np.ndarray[int64] (N,), c: np.ndarray[complex128] (N,))`, canonical order = k ascending.
 - No normalisation of scale in core; units are input units (SVG user units or pixels).
 
@@ -110,6 +110,28 @@ on a `<canvas>`. Serve the folder over HTTP so `fetch` can read the JSON
 - **UI toggles:** `circles` (epicycle circles), `target image` (the full-term reconstruction drawn as a faint reference underlay — *not* the literal source, just a dense reconstruction), `original (10%)` (the backdrop image above).
 
 These demo assets are reproducible from `web/SOURCES.md`; they are a convenience renderer, not part of the Python package's tested surface (only the `coeffs.json` schema is covered by `test_browser.py`).
+
+## P6 — labels, pen-up, smooth jumps (U20); SVG colour (U20b); regions (U21)
+
+Introduces a per-sample **label** so connector segments are *pen-up* (traversed but not drawn), which removes the straight "lines between sections" in multi-stroke output.
+
+**Types.** A labelled `Tour` is `(z: complex128 (n,), label: int16 (n,))`. `PEN_UP = -1`; `Palette = uint8 (P,3)` (U21). Label ≥ 0 is a colour index (default ink = 0 when there is no colour source); `PEN_UP` marks connector samples renderers MUST NOT draw. The colour at parameter t is `label[⌊t·N⌋]` (FR-11).
+
+**`join_strokes(strokes, labels=None) -> (Tour, connector_len)`** (U20). Same greedy ordering, now label-carrying: each stroke's pen-down points take its label (0 if `labels` is None); the connector points between strokes and the closing jump carry `PEN_UP`. Geometry and `connector_len` are unchanged from the v1 row above. Connector points are just the two bridged endpoints; their *timing* is assigned in `resample`.
+
+**`resample(tour, n, jump_time=0.0) -> Tour`** (U20). Labelled, non-uniform-in-time resample. The period splits into parameter-time slots: each connector gets a fixed `jump_time` fraction (FR-12); the remaining time divides among pen-down segments in proportion to arc length (constant pen speed within each visible stroke). On a connector `a→b`, position `= a + (b−a)·s(u)`, `u ∈ [0,1]`, smoothstep `s(u) = 3u² − 2u³` (zero velocity at both ends). Pen-down samples copy their segment's label; connector samples are `PEN_UP`. **`jump_time=0.0` reduces to the v1 arc-length resample** (connectors collapse to zero time, no pen-up slot), so existing callers are unaffected. Deterministic; raises `ValueError` on zero total pen-down length.
+
+**`error(z, full, kept, mask=None) -> ErrorReport`** (U20). With `mask` (`label != PEN_UP`), `rms_sampled` and `pct_height` are computed over **pen-down samples only** (FR-13); `rms_parseval` stays the unmasked Parseval value, retained only as an internal consistency check (it no longer equals the masked rms). `mask=None` → v1 behaviour unchanged.
+
+**`io/export.py`** (U20). JSON gains `"segments": [{"t0","t1","colour":[r,g,b]}]` for pen-down spans only (one per visible-stroke run, in drawing order) plus `"background":[r,g,b]`. The `{N, ordering, terms}` keys are unchanged, so old consumers still work.
+
+**`render/`** (U20). With the F7.1 dense trail, split the trail into runs by label, draw each run in its colour, and **skip `PEN_UP` runs**. Circles and radius arms stay neutral grey. Default canvas: dark (`#111`) for `photo`/`regions`, white for `svg`/`lineart`; `--canvas` overrides. New CLI flag `--jump-time` (default `2/M` clamped to [0.002, 0.05]).
+
+**`web/index.html`** (U20). Read `segments`; colour the trail per span and skip pen-up gaps; fall back to single-colour when `segments` is absent.
+
+**SVG colour (U20b, FR-14).** `io/svg.py` returns `(strokes, colours)`; colour from the `stroke` attribute (style or attribute, group-inherited): `#rgb`, `#rrggbb`, `rgb()`, or a CSS named colour from a small built-in table; anything else → default ink.
+
+**`core/regions.py` (U21, FR-15)** — detailed contract added when U21 starts. `quantize(rgb, p) -> (index, Palette)` via Pillow `Image.quantize(colors=p, method=MEDIANCUT, dither=NONE)` (deterministic, no k-means). `region_boundaries(index, palette, mode) -> list[(Stroke, colour_idx)]` via `skimage.measure.find_contours(mask, 0.5)`, each contour oriented region-on-the-left by signed shoelace area (holes reverse, correctly); drop contours shorter than `min_component`. Default `both` draws each shared edge twice side-by-side (John decision 2026-10-16); `foreground` draws it once in the smaller region's colour, excluding background. Background = palette index with the most border pixels.
 
 ## Dependencies
 | package | why |
