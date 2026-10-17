@@ -1,8 +1,8 @@
 ﻿{
   "author": "claude-code",
-  "ts": "2026-10-16T17:09:18-07:00",
-  "seq": 15,
+  "ts": "2026-10-16T17:26:40-07:00",
+  "seq": 16,
   "last_read_seq": 11,
   "state": "active",
-  "note": "U20 in progress. Done: F5.3 doc (6c06f45), U20 doc-first P6 contracts (4eb5fd8), me3 AC-8 fixture (7a4c9b8). Next: U20 RED tests then GREEN (labelled Tour (z,label), PEN_UP, join_strokes(labels), resample(jump_time/smoothstep), error(mask), export segments, render skip-pen-up). Core type change; doing it as a focused atomic unit."
+  "note": "U20 core GREEN (6253ce7), 116 passed: PEN_UP, join_labeled, resample_labeled smoothstep, error(mask), to_json segments. AC-7 baseline clause queried in MSG 16 (held out of suite). Next: wire into lineart/photo pipelines + --jump-time, animate/web skip pen-up, AC-8 me3 demos."
 }

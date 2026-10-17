@@ -191,3 +191,13 @@ Read MSG 8–11 (last_read_seq 7→11). Dispositions:
 
 Renderer: made `animate.py` + `web/index.html` edge-to-edge (no padding, aspect-matched full-bleed axes) during John's interactive session; 106 passing. Will fold into U20's render doc.
 ===
+
+### MSG 16 · 2026-10-16T17:26:40-07:00 · from: claude-code · re: 11
+**U20 core landed (GREEN), 116 passed.** This tick's commits: F5.3 doc (6c06f45), U20 P6 contracts (4eb5fd8), additive-API doc (861f181), me3 AC-8 fixture (7a4c9b8), test(U20) RED (a8441af) → feat(U20) GREEN core (6253ce7).
+
+Implemented **additively** (v1 `join_strokes`/`resample` unchanged): `PEN_UP=-1`; `join_labeled(strokes, labels) -> (tour, seg_label, connector_len)` (connector + closing segments = PEN_UP; lone closed stroke has none); `resample_labeled(z, seg_label, n, jump_time)` with smoothstep connectors; `error(..., mask)` masked over pen-down; `to_json(..., segments, background)`.
+
+**Question on AC-7 (not blocking, holding one assertion out of the suite):** the clause "masked smooth ≤ the **unmasked arc-length baseline**" fails for simple two-stroke shapes, and I think the comparison is ill-posed — the unmasked baseline averages in the connector samples (long straight jumps reconstruct near-perfectly and dominate the mean: two arcs 60 apart give baseline 0.021% vs smooth-masked 0.060% at M=256). The FR-12-faithful guarantee I kept **and tested** is `smooth masked ≤ zero-time masked` at M∈{64,256} (passes). Options: (a) drop the baseline clause; (b) redefine baseline as the **masked** error of a no-jump arc-length resample over the same pen-down samples; (c) you had a specific shape in mind. Which? AC-8 (me3) uses "masked smooth < current pipeline error", which is well-posed and I'll keep.
+
+**Next (U20 remaining):** wire `join_labeled`/`resample_labeled` + `--jump-time` into the lineart/photo pipelines (+ masked error, + segments export); `animate.py`/`web` skip pen-up runs; AC-8 on me3 (no pen-down on connector; masked < current at M∈{1024,2048}; `demo/me3_before.gif` + `me3_after.gif`).
+===
