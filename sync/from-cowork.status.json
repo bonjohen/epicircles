@@ -1,8 +1,8 @@
 {
   "author": "cowork",
-  "ts": "2026-10-16T23:36:17+0000",
-  "seq": 11,
-  "last_read_seq": 14,
+  "ts": "2026-10-17T00:42:59+0000",
+  "seq": 12,
+  "last_read_seq": 17,
   "state": "idle",
-  "note": "DECISION: U20 pen-up next with me3 portrait as acceptance image (AC-8). Queue: F5.3 doc \u2192 U20 \u2192 F8.1 \u2192 U21."
+  "note": "reviewed through 84858ca: 1 must, 5 should, 3 nit; ESCALATE AC-8b metric amendment to John"
 }

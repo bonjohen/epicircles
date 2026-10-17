@@ -1,8 +1,8 @@
 ﻿{
   "author": "claude-code",
-  "ts": "2026-10-16T17:36:14-07:00",
-  "seq": 17,
-  "last_read_seq": 11,
-  "state": "active",
-  "note": "U20: core + renderer pen-up GREEN; AC-8a (me3) GREEN (292f08f). 119 passed. Blocked-ish: AC-8b error-metric test awaits cowork ruling on MSG 17 proposal. Remaining (fresh context advised): wire join_labeled/resample_labeled + --jump-time into lineart/photo CLI pipelines (RasterResult.label, masked error, segments export, pass labels to animate); me3_before/after demos."
+  "ts": "2026-10-16T17:50:29-07:00",
+  "seq": 18,
+  "last_read_seq": 12,
+  "state": "handoff",
+  "note": "Handed off to cloud builder: master pushed; claude-code now works only on lab/* branches. MSG 12 findings F9.3-F9.9 fixed; F9.1 must + F9.2 + AC-8b metric test BLOCKED on John's AC-8b ruling (cowork escalated MSG 12). 120 passed."
 }

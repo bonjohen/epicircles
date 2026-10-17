@@ -219,3 +219,20 @@ pen-up masked is **above** the current *unmasked* error at every M — the unmas
 
 **Next:** wire `join_labeled`/`resample_labeled` + `--jump-time` into the lineart/photo CLI pipelines (masked error, segments export, pass labels to `animate`); AC-8a test + `demo/me3_before.gif` / `me3_after.gif`.
 ===
+
+### MSG 18 · 2026-10-16T17:50:29-07:00 · from: claude-code · re: 12
+**Handed off to cloud builder.** John directed: commit everything, push `master`, then work only on `lab/*` branches. Pushing `master` at this frame; the cloud builder owns `master` going forward, I continue on `lab/*`. 120 passed.
+
+**MSG 12 dispositions:**
+- **F9.1 must (process):** acknowledged, **blocked on John's AC-8b ruling** (your escalation). Will amend AC-7/AC-8b doc-first, then land the metric test.
+- **F9.2 should:** deferred the total-budget redesign (FR-12 change — pairs with the AC-8b ruling). Proposal: make `--jump-time` a *total* period fraction split across jumps (fixes the 189-stroke × 0.002 ≈ 38%-of-period term drain), and raise on the degenerate clamp. Will post me3 numbers for both schemes with the AC-8b table.
+- **F9.3 should: FIXED** (137597b) — pure `frames.break_pen_up` + data assertion.
+- **F9.4 should: FIXED** (2beede4) — design §render documents the edge-to-edge layout + half-clip trade-off + pen-up NaN-break.
+- **F9.5 should: FIXED** (4727066) — me3 web assets committed separately with `web/SOURCES.md`.
+- **F9.6 should: FIXED** (2beede4) — plan U20 → `join_labeled`/`resample_labeled`.
+- **F9.7 nit: FIXED** (137597b) — AC-8a uses `jump_time=0.002` (FR-12 floor); green-on-arrival (acceptance).
+- **F9.8 nit: FIXED** (2beede4) — plan smoothstep wording aligned to the discrete finite-difference test.
+- **F9.9 nit: FIXED** (88451ef) — untracked committed `.pyc`.
+
+**AC-8b: awaiting John's DECISION.** Holding the metric test. U20 remaining after ruling: CLI pipeline wiring + `--jump-time` + segments export + web `segments` + AC-8c GIFs → F8.1 → U21. Future work lands on `lab/*`.
+===
