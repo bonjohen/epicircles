@@ -33,3 +33,39 @@ def test_pen_path_is_dense_and_matches_evaluate():
     # the dense trail IS the reconstruction sampled at t=i/R
     t = np.arange(r) / r
     assert np.allclose(path, evaluate(spec, t))
+
+
+def test_revealed_count_never_leads_the_pen():
+    """F8.1: on frame i the last revealed trail point lies at t in [t_i - 1/R, t_i]."""
+    from epicycles.render.frames import revealed_count
+
+    for n_frames, R in [(10, 100), (150, 4096), (7, 3), (600, 16384)]:
+        prev = 0
+        for i in range(n_frames):
+            k = revealed_count(i, n_frames, R)
+            assert 1 <= k <= R
+            assert k >= prev
+            prev = k
+            t_last = (k - 1) / R
+            t_i = i / n_frames
+            assert t_i - 1 / R - 1e-12 <= t_last <= t_i + 1e-12
+
+
+def test_write_animation_reveal_uses_revealed_count(monkeypatch, tmp_path):
+    """F8.2: write_animation's reveal goes through frames.revealed_count."""
+    import numpy as np
+    from epicycles.core.fourier import select, spectrum
+    from epicycles.render import animate
+
+    calls = []
+    real = animate.revealed_count
+
+    def spy(i, n, r):
+        calls.append((i, n, r))
+        return real(i, n, r)
+
+    monkeypatch.setattr(animate, "revealed_count", spy)
+    z = np.exp(2j * np.pi * np.arange(64) / 64)
+    kept = select(spectrum(z), 3, "magnitude")
+    animate.write_animation(kept, tmp_path / "a.gif", n_frames=5, fps=5)
+    assert [c[0] for c in calls if c[1] == 5] == list(range(5))
