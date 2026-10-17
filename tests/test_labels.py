@@ -147,6 +147,33 @@ def test_write_animation_accepts_labels_and_skips_pen_up(tmp_path):
     assert Image.open(out).n_frames == 20
 
 
+def test_ac8a_no_pendown_sample_on_connector_me3():
+    """AC-8a on the real acceptance image: every pen-down sample lies on a
+    stroke (within ~1 px of a skeleton point), never on a connector."""
+    from pathlib import Path
+
+    from scipy.spatial import cKDTree
+
+    from epicycles.cli import next_pow2_capped
+    from epicycles.core.raster import binarize, skeleton, skeleton_to_strokes
+    from epicycles.io.image import load_gray
+
+    gray = load_gray(Path(__file__).parent / "fixtures" / "me3.png", 800)
+    strokes = [
+        np.asarray(s, dtype=np.complex128)
+        for s in skeleton_to_strokes(skeleton(binarize(gray)))
+    ]
+    z, seg, _clen = join_labeled(strokes)
+    n = next_pow2_capped(len(z))
+    zr, lab = resample_labeled(z, seg, n, jump_time=2 / 2048)
+
+    pts = np.concatenate(strokes)
+    tree = cKDTree(np.column_stack([pts.real, pts.imag]))
+    pen = zr[np.asarray(lab) != PEN_UP]
+    dist, _ = tree.query(np.column_stack([pen.real, pen.imag]))
+    assert float(dist.max()) < 1.0
+
+
 def test_json_segments_round_trip():
     z = np.exp(2j * np.pi * np.arange(256) / 256)
     kept = select(spectrum(z), 5, "magnitude")
