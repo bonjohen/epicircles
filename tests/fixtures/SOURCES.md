@@ -25,3 +25,13 @@ reconstructs at **0.0138 % of its larger dimension at M=512** (well under the
 0.5 % AC-2 bound). Transform handling is covered separately by `transformed.svg`
 and the `test_sampling_is_scale_invariant` test, since the probed public-domain
 drawings that used `<g transform>` were fill-based rather than stroke-based.
+
+## Acceptance image (AC-8, U20)
+
+| File | Source | Licence |
+|---|---|---|
+| `me3.png` | John Boen, own image, used with permission. Line-art portrait cropped to the circular frame and downscaled to max-dim 800 (grayscale). | Used with permission (John Boen, repo owner) |
+
+`me3.png` is the U20 pen-up acceptance image (AC-8): a detailed multi-stroke
+line-art portrait whose many separate strokes make the connector "lines between
+sections" visible, so it is a good test that pen-up + smooth jumps remove them.
