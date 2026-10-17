@@ -12,6 +12,9 @@ from __future__ import annotations
 
 import numpy as np
 
+#: Segment label for connector/closing jumps; renderers must not draw these.
+PEN_UP = -1
+
 
 def _scale(points: np.ndarray) -> float:
     if points.size == 0:
@@ -20,11 +23,27 @@ def _scale(points: np.ndarray) -> float:
     return s if s > 0 else 1.0
 
 
-def join_strokes(strokes: list[np.ndarray]) -> tuple[np.ndarray, float]:
-    """Return ``(tour, connector_len)`` for a list of open strokes."""
+def join_labeled(
+    strokes: list[np.ndarray], labels: list[int] | None = None
+) -> tuple[np.ndarray, np.ndarray, float]:
+    """Return ``(tour, seg_label, connector_len)`` for a list of strokes.
+
+    ``tour`` is the bare ``complex128 (n,)`` path (identical to
+    :func:`join_strokes`). ``seg_label`` is ``int16 (n,)`` labelling each segment
+    ``tour[i] → tour[(i+1) % n]``: a pen-down segment inside a stroke carries that
+    stroke's colour (``labels[j]``, default 0); the connector segments between
+    strokes and the closing jump carry :data:`PEN_UP`. A lone **closed** stroke
+    has no pen-up segment (its closure is drawn). See docs/design.md §P6.
+    """
     strokes = [np.asarray(s, dtype=np.complex128) for s in strokes]
     if not strokes:
-        return np.array([], dtype=np.complex128), 0.0
+        return (
+            np.array([], dtype=np.complex128),
+            np.array([], dtype=np.int16),
+            0.0,
+        )
+    if labels is None:
+        labels = [0] * len(strokes)
 
     tol = 1e-9 * _scale(np.concatenate(strokes))
     closed = [len(s) >= 3 and abs(s[-1] - s[0]) <= tol for s in strokes]
@@ -54,6 +73,7 @@ def join_strokes(strokes: list[np.ndarray]) -> tuple[np.ndarray, float]:
         cur_end = s[0] if orient == 1 else s[-1]
 
     segments: list[np.ndarray] = []
+    seg_labels: list[np.ndarray] = []
     first_start = None
     last_end = None
     for idx, (j, rev) in enumerate(order):
@@ -61,13 +81,35 @@ def join_strokes(strokes: list[np.ndarray]) -> tuple[np.ndarray, float]:
         if idx == 0:
             first_start = s[0]
         last_end = s[-1]  # pre-drop endpoint, used for the closing jump
-        segments.append(s[:-1] if closed[j] else s)
+        pts = s[:-1] if closed[j] else s
+        segments.append(pts)
+        colour = int(labels[j])
+        # pen-down segments within this stroke
+        seg_labels.append(np.full(len(pts) - 1, colour, dtype=np.int16))
+        # the segment leaving this stroke's last point
+        if idx < n - 1:
+            seg_labels.append(np.array([PEN_UP], dtype=np.int16))  # connector
+        elif n == 1 and closed[j]:
+            seg_labels.append(np.array([colour], dtype=np.int16))  # natural closure
+        else:
+            seg_labels.append(np.array([PEN_UP], dtype=np.int16))  # closing jump
 
     tour = np.concatenate(segments)
+    seg_label = np.concatenate(seg_labels)
     closing = abs(last_end - first_start)
     if closing <= tol:
         closing = 0.0
-    return tour, float(joins + closing)
+    return tour, seg_label, float(joins + closing)
+
+
+def join_strokes(strokes: list[np.ndarray]) -> tuple[np.ndarray, float]:
+    """Return ``(tour, connector_len)`` for a list of open strokes (v1).
+
+    Thin wrapper over :func:`join_labeled` that drops the labels, preserving the
+    original bare-tour signature for existing callers.
+    """
+    tour, _seg_label, connector_len = join_labeled(strokes)
+    return tour, connector_len
 
 
 def _endpoints(stroke: np.ndarray, reverse: bool) -> tuple[complex, complex]:

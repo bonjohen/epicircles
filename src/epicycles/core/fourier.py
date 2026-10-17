@@ -124,23 +124,40 @@ class ErrorReport:
     pct_height: float
 
 
-def error(z: np.ndarray, full: Spectrum, kept: Spectrum) -> ErrorReport:
+def error(
+    z: np.ndarray,
+    full: Spectrum,
+    kept: Spectrum,
+    mask: np.ndarray | None = None,
+) -> ErrorReport:
     """Reconstruction error of ``kept`` terms over the samples ``z``.
 
     ``rms_sampled`` is the RMS pointwise distance at ``t=n/N``; ``rms_parseval``
-    is ``sqrt(Σ_{k∉kept} |c_k|²)`` (dropped energy). The two agree up to float
-    error. ``pct_height`` is ``100·rms_sampled / max(width, height)`` of the
-    sample bounding box; a zero-size bounding box raises :class:`ValueError`.
+    is ``sqrt(Σ_{k∉kept} |c_k|²)`` (dropped energy). With ``mask=None`` the two
+    agree up to float error. ``pct_height`` is ``100·rms_sampled / max(width,
+    height)`` of the sample bounding box; a zero-size bounding box raises
+    :class:`ValueError`.
+
+    When ``mask`` (a boolean ``(n,)``, typically ``label != PEN_UP``) is given,
+    ``rms_sampled`` and ``pct_height`` are computed over the **pen-down samples
+    only** (FR-13). Parseval no longer applies to that masked rms, so
+    ``rms_parseval`` stays the unmasked value as an internal consistency check.
     """
     z = np.asarray(z, dtype=np.complex128)
     n = z.shape[0]
     t = np.arange(n) / n
-    rms_sampled = float(np.sqrt(np.mean(np.abs(z - evaluate(kept, t)) ** 2)))
+    resid2 = np.abs(z - evaluate(kept, t)) ** 2
 
     dropped = ~np.isin(full.k, kept.k)
     rms_parseval = float(np.sqrt(np.sum(np.abs(full.c[dropped]) ** 2)))
 
-    scale = max(float(np.ptp(z.real)), float(np.ptp(z.imag)))
+    sel = np.ones(n, dtype=bool) if mask is None else np.asarray(mask, dtype=bool)
+    if not sel.any():
+        raise ValueError("no pen-down samples to measure")
+    rms_sampled = float(np.sqrt(np.mean(resid2[sel])))
+
+    zp = z[sel]
+    scale = max(float(np.ptp(zp.real)), float(np.ptp(zp.imag)))
     if scale == 0.0:
         raise ValueError("degenerate (zero-size) bounding box; percent undefined")
     pct_height = 100.0 * rms_sampled / scale
