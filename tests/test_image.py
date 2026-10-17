@@ -44,8 +44,12 @@ def test_run_lineart_on_white_on_transparent_reconstructs(tmp_path):
     assert len(res.z) == res.n
 
 
-def test_all_white_image_raises_clear_no_ink_error(tmp_path):
+@pytest.mark.parametrize("pipeline", ["lineart", "photo"])
+def test_all_white_image_raises_clear_no_ink_error(tmp_path, pipeline):
+    from epicycles.cli import run_photo_pipeline
+
+    run = {"lineart": run_lineart_pipeline, "photo": run_photo_pipeline}[pipeline]
     p = tmp_path / "blank.png"
     Image.new("L", (120, 120), 255).save(p)
     with pytest.raises(ValueError, match="no ink found in image"):
-        run_lineart_pipeline(str(p), "auto", 64, "magnitude")
+        run(str(p), "auto", 64, "magnitude")
