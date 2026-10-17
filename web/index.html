@@ -94,7 +94,10 @@ async function load() {
     return;
   }
   termsSlider.max = String(spec.terms.length);
-  termsSlider.value = String(spec.terms.length);
+  // Default to a modest M so the rotating-circle chain is actually visible:
+  // at the full term count every epicycle is sub-pixel and gets culled, so the
+  // page looks like a finished scribble with no circles. Drag M up for detail.
+  termsSlider.value = String(Math.min(24, spec.terms.length));
   termsVal.textContent = termsSlider.value;
   statusEl.textContent = `N=${spec.N} · ordering=${spec.ordering} · ${spec.terms.length} terms`;
   computeView();
@@ -124,8 +127,8 @@ function computeView() {
     minY = Math.min(minY, y); maxY = Math.max(maxY, y);
   }
   const w = maxX - minX || 1, h = maxY - minY || 1;
-  const pad = 0.1;
-  const scale = Math.min(canvas.width / (w * (1 + pad)), canvas.height / (h * (1 + pad)));
+  // No padding: the drawing fills the canvas edge-to-edge.
+  const scale = Math.min(canvas.width / w, canvas.height / h);
   view = { scale, ox: (minX + maxX) / 2, oy: (minY + maxY) / 2,
            minX, maxX, minY, maxY };
 

@@ -1,13 +1,25 @@
 # Demo asset sources and regeneration
 
 The committed demo assets (`coeffs.json`, `original.png`, `original.json`) are a
-convenience so the renderer works out of the box. They are reproducible from the
-public-domain source below.
+convenience so the renderer works out of the box.
 
-## Source drawing
+**Currently committed demo: `me3` portrait.** The live `coeffs.json` /
+`original.png` / `original.json` are John Boen's own line-art portrait (same
+image as `tests/fixtures/me3.png`, used with permission), cropped to the circle.
+The coefficients were generated during development by the clean line-art pipeline
+(skeleton → prune short strokes → weld near-touching endpoints → 2-opt/Or-opt
+order → DFT, M=4000); that path is not yet exposed on the CLI (lands with U20
+wiring), so this asset is not CLI-reproducible yet. `original.json` is the pixel
+frame `{x:0, y:H, w:W, h:H}` of `load_gray(me3_crop.png, 800)`.
+
+The public-domain treble-clef source below is retained for reference and remains
+reproducible via the CLI.
+
+## Source drawing (reference)
 
 | File | Source | Licence |
 |---|---|---|
+| me3 portrait | John Boen, own image, used with permission | Used with permission (repo owner) |
 | treble clef | Wikimedia Commons, `File:Treble clef.svg` — page `https://commons.wikimedia.org/wiki/File:Treble_clef.svg`, file `https://upload.wikimedia.org/wikipedia/commons/f/fa/Treble_clef.svg` | **Public domain** (author released worldwide into the public domain) |
 
 ## Regenerate `coeffs.json` (the animated coefficients)
