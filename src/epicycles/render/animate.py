@@ -19,11 +19,10 @@ from matplotlib.animation import FuncAnimation, PillowWriter  # noqa: E402
 from matplotlib.patches import Circle  # noqa: E402
 
 from epicycles.core.fourier import Spectrum  # noqa: E402
-from epicycles.core.tour import PEN_UP  # noqa: E402
 from epicycles.render.frames import (  # noqa: E402
+    break_pen_up,
     frame_geometry,
     pen_path,
-    trail_labels,
     trail_resolution,
 )
 
@@ -53,10 +52,7 @@ def write_animation(
 
     # Pen-up: NaN out the trail where the sample label is PEN_UP, so matplotlib
     # leaves a gap (the arm still moves, the trail is not drawn there).
-    pen_draw = pen.astype(np.complex128).copy()
-    if labels is not None:
-        up = trail_labels(labels, resolution) == PEN_UP
-        pen_draw[up] = np.nan + 1j * np.nan
+    pen_draw = pen.astype(np.complex128).copy() if labels is None else break_pen_up(pen, labels)
 
     pts = pen if original is None else np.concatenate([pen, original])
     # No padding: the drawing fills the frame edge-to-edge.

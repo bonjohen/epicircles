@@ -133,6 +133,20 @@ def test_trail_labels_maps_samples_to_trail():
     assert (tl == PEN_UP).any() and (tl != PEN_UP).any()
 
 
+def test_break_pen_up_nans_connector_trail_points():
+    from epicycles.render.frames import break_pen_up, trail_labels
+
+    strokes = _two_strokes()
+    z, seg, clen = join_labeled(strokes)
+    zr, lab = resample_labeled(z, seg, 1024, jump_time=0.03)
+    pen = np.arange(256) + 1j * np.arange(256)  # dummy dense trail (R=256)
+    drawn = break_pen_up(pen, lab)
+    up = trail_labels(lab, 256) == PEN_UP
+    assert np.isnan(drawn[up].real).all()  # connector points are not drawn
+    assert np.isfinite(drawn[~up].real).all()  # stroke points are drawn
+    assert up.any() and (~up).any()
+
+
 def test_write_animation_accepts_labels_and_skips_pen_up(tmp_path):
     from PIL import Image
 
@@ -165,7 +179,8 @@ def test_ac8a_no_pendown_sample_on_connector_me3():
     ]
     z, seg, _clen = join_labeled(strokes)
     n = next_pow2_capped(len(z))
-    zr, lab = resample_labeled(z, seg, n, jump_time=2 / 2048)
+    # use the FR-12 clamp floor (what the CLI ships at these M)
+    zr, lab = resample_labeled(z, seg, n, jump_time=0.002)
 
     pts = np.concatenate(strokes)
     tree = cKDTree(np.column_stack([pts.real, pts.imag]))

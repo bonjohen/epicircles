@@ -12,6 +12,7 @@ from typing import NamedTuple
 import numpy as np
 
 from epicycles.core.fourier import Spectrum, chain, evaluate
+from epicycles.core.tour import PEN_UP
 
 
 def trail_resolution(n_terms: int, n_samples: int = 0) -> int:
@@ -40,6 +41,19 @@ def trail_labels(label: np.ndarray, resolution: int) -> np.ndarray:
     n = label.shape[0]
     r = np.arange(int(resolution))
     return label[(r * n) // int(resolution)]
+
+
+def break_pen_up(pen: np.ndarray, labels: np.ndarray) -> np.ndarray:
+    """Dense pen trail with ``PEN_UP`` points set to NaN (so they aren't drawn).
+
+    ``pen`` is the ``(R,)`` dense trajectory; ``labels`` the ``(N,)`` per-sample
+    tour labels. Returns a complex copy where every trail point whose
+    :func:`trail_labels` value is ``PEN_UP`` is ``nan+nanj`` — matplotlib leaves
+    a gap there (the arm still moves, the pen lifts).
+    """
+    out = np.asarray(pen, dtype=np.complex128).copy()
+    out[trail_labels(labels, out.shape[0]) == PEN_UP] = np.nan + 1j * np.nan
+    return out
 
 
 class FrameGeom(NamedTuple):
