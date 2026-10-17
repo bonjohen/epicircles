@@ -23,6 +23,7 @@ from epicycles.render.frames import (  # noqa: E402
     break_pen_up,
     frame_geometry,
     pen_path,
+    revealed_count,
     trail_resolution,
 )
 
@@ -101,9 +102,12 @@ def write_animation(
                 c.set_visible(False)
         chain_pts = np.append(g.centers, g.pen)
         radius_line.set_data(chain_pts.real, chain_pts.imag)
-        # reveal the dense trail up to this frame's time t=(i+1)/n_frames
-        shown = round((i + 1) / n_frames * resolution)
-        trail.set_data(pen_draw.real[:shown], pen_draw.imag[:shown])
+        # reveal the dense trail up to this frame's time t_i = i/n_frames
+        shown = revealed_count(i, n_frames, resolution)
+        xs, ys = pen_draw.real[:shown], pen_draw.imag[:shown]
+        if i == n_frames - 1:  # close the loop on the final frame
+            xs, ys = np.append(xs, pen_draw.real[0]), np.append(ys, pen_draw.imag[0])
+        trail.set_data(xs, ys)
         return (*circles, radius_line, trail)
 
     anim = FuncAnimation(fig, update, frames=n_frames, blit=False)

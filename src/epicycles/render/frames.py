@@ -24,6 +24,15 @@ def trail_resolution(n_terms: int, n_samples: int = 0) -> int:
     return max(8 * int(n_terms), int(n_samples), 2)
 
 
+def revealed_count(i: int, n_frames: int, resolution: int) -> int:
+    """Dense-trail points to show on frame ``i``: ``min(R, floor(i*R/n_frames) + 1)``.
+
+    The last revealed point is at ``t <= t_i = i/n_frames``, so the trail never
+    runs ahead of the pen tip (F8.1).
+    """
+    return min(int(resolution), (int(i) * int(resolution)) // int(n_frames) + 1)
+
+
 def pen_path(spec: Spectrum, resolution: int) -> np.ndarray:
     """Dense pen trajectory: ``evaluate(spec, arange(R)/R)``, shape ``(R,)``."""
     t = np.arange(resolution) / resolution
